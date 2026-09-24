@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
+import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMoney, type MenuItem } from "@/lib/menu";
 
-type OrderItem = { id: number; itemName: string; price: number; quantity: number; notes: string };
+type OrderItem = { id: number; menuItemId: string | null; itemName: string; price: number; quantity: number; notes: string };
 type Order = { id: string; code: string; tableCode: string | null; orderType: string; source: string; status: string; customerName: string; note: string; total: number; paymentStatus: string; createdAt: string; items: OrderItem[] };
 const columns = [
   { id: "new", title: "Đơn mới", icon: Clock3, action: "Bắt đầu làm", next: "cooking" },
@@ -49,6 +49,8 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string } | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [editTarget, setEditTarget] = useState<Order | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const updatingIdsRef = useRef(new Set<string>());
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
 
@@ -233,6 +235,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                     <b>{formatMoney(order.total)}</b>
                     <div className="flex items-center gap-1">
                       {column.next && <Button size="sm" className="bg-[#a82d1e]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Đang cập nhật...</> : column.action}</Button>}
+                      {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} className="text-[#a82d1e] hover:bg-[#fff0df]" onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
                       <Button variant="ghost" size="icon-sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
                     </div>
                   </div>
@@ -243,6 +246,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         })}
       </div>
     </section>
+    <Dialog open={editTarget !== null} onOpenChange={(next) => { if (!next && !savingEdit) setEditTarget(null); }}>
+      {editTarget && <EditOrderDialog order={editTarget} menu={menu} onSavingChange={setSavingEdit} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); void load(true); }} />}
+    </Dialog>
     <Dialog open={deleteTarget !== null} onOpenChange={(next) => { if (!next && !deleting) { setDeleteTarget(null); setDeleteError(""); } }}>
       <DialogContent>
         <DialogHeader>
@@ -260,6 +266,141 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
 }
 
 function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-1 text-2xl font-black">{value}</p></div>; }
+
+
+type EditLine = {
+  key: string;
+  existingId?: number;
+  menuItemId?: string | null;
+  name: string;
+  price: number;
+  quantity: number;
+  notes: string;
+};
+
+function EditOrderDialog({
+  order, menu, onSavingChange, onClose, onSaved,
+}: {
+  order: Order;
+  menu: MenuItem[];
+  onSavingChange: (saving: boolean) => void;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [tableCode, setTableCode] = useState(order.tableCode ?? "");
+  const [customerName, setCustomerName] = useState(order.customerName);
+  const [note, setNote] = useState(order.note);
+  const [lines, setLines] = useState<EditLine[]>(() => order.items.map((item) => ({
+    key: `existing-${item.id}`, existingId: item.id, menuItemId: item.menuItemId,
+    name: item.itemName, price: item.price, quantity: item.quantity, notes: item.notes,
+  })));
+  const [selectedMenuId, setSelectedMenuId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const total = lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+
+  function changeQuantity(key: string, delta: number) {
+    setLines((current) => current.map((line) => line.key === key
+      ? { ...line, quantity: Math.max(1, Math.min(20, line.quantity + delta)) }
+      : line));
+  }
+
+  function addItem() {
+    const item = menu.find((entry) => entry.id === selectedMenuId);
+    if (!item) return;
+    setLines((current) => {
+      const existing = current.find((line) => line.menuItemId === item.id
+        || (line.menuItemId == null && line.name === item.name));
+      if (existing) return current.map((line) => line.key === existing.key
+        ? { ...line, quantity: Math.min(20, line.quantity + 1) } : line);
+      return [...current, {
+        key: `new-${item.id}`, menuItemId: item.id, name: item.name,
+        price: item.price, quantity: 1, notes: "",
+      }];
+    });
+    setSelectedMenuId("");
+  }
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (saving || !lines.length) return;
+    setSaving(true);
+    onSavingChange(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          tableCode, customerName, note,
+          items: lines.map((line) => line.existingId
+            ? { id: line.existingId, quantity: line.quantity }
+            : { menuItemId: line.menuItemId, quantity: line.quantity }),
+        }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Không thể lưu thay đổi");
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể lưu thay đổi");
+    } finally {
+      setSaving(false);
+      onSavingChange(false);
+    }
+  }
+
+  return <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-xl">
+    <DialogHeader>
+      <DialogTitle>Sửa đơn {order.code}</DialogTitle>
+      <DialogDescription>Chỉnh sửa món và thông tin trước khi đơn hoàn thành.</DialogDescription>
+    </DialogHeader>
+    <form onSubmit={(event) => void save(event)} className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="space-y-1 text-sm font-semibold">Số bàn (để trống nếu mang về)
+          <Input value={tableCode} maxLength={20} disabled={saving} onChange={(event) => setTableCode(event.target.value)} placeholder="Số bàn" />
+        </label>
+        <label className="space-y-1 text-sm font-semibold">Tên khách
+          <Input value={customerName} maxLength={80} disabled={saving} onChange={(event) => setCustomerName(event.target.value)} placeholder="Tên khách" />
+        </label>
+      </div>
+      <div>
+        <p className="mb-2 text-sm font-bold">Món trong đơn</p>
+        <div className="space-y-2">
+          {lines.map((line) => <div key={line.key} className="flex items-center gap-2 rounded-xl border p-2">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{line.name}</p>
+              <p className="text-xs text-zinc-500">{formatMoney(line.price)} / món</p>
+              {line.notes && <p className="text-xs text-zinc-500">Ghi chú món: {line.notes}</p>}
+            </div>
+            <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity <= 1} onClick={() => changeQuantity(line.key, -1)} aria-label={`Giảm ${line.name}`}>−</Button>
+            <span className="w-5 text-center text-sm font-bold">{line.quantity}</span>
+            <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity >= 20} onClick={() => changeQuantity(line.key, 1)} aria-label={`Thêm ${line.name}`}>+</Button>
+            <Button type="button" size="icon-sm" variant="ghost" disabled={saving} onClick={() => setLines((current) => current.filter((entry) => entry.key !== line.key))} aria-label={`Bỏ ${line.name}`} className="text-red-700"><Trash2 className="size-4" /></Button>
+          </div>)}
+          {!lines.length && <p className="rounded-xl border border-dashed p-3 text-sm text-zinc-500">Hãy thêm ít nhất một món.</p>}
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <select aria-label="Chọn món để thêm" value={selectedMenuId} disabled={saving} onChange={(event) => setSelectedMenuId(event.target.value)} className="min-w-0 flex-1 rounded-md border bg-white px-3 py-2 text-sm">
+          <option value="">Chọn món để thêm...</option>
+          {menu.map((item) => <option key={item.id} value={item.id}>{item.name} · {formatMoney(item.price)}</option>)}
+        </select>
+        <Button type="button" variant="outline" disabled={!selectedMenuId || saving} onClick={addItem}><Plus className="size-4" /> Thêm</Button>
+      </div>
+      <label className="block space-y-1 text-sm font-semibold">Ghi chú đơn
+        <Textarea value={note} maxLength={500} disabled={saving} onChange={(event) => setNote(event.target.value)} placeholder="Ghi chú cho bếp..." />
+      </label>
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      <div className="sticky bottom-0 -mx-6 -mb-6 flex flex-wrap items-center justify-between gap-3 border-t bg-white p-4">
+        <div><p className="text-xs text-zinc-500">Tổng cộng</p><p className="text-lg font-black">{formatMoney(total)}</p></div>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" disabled={saving} onClick={onClose}>Hủy</Button>
+          <Button type="submit" disabled={saving || !lines.length} className="bg-[#a82d1e] hover:bg-[#89291d]">{saving ? <><LoaderCircle className="size-4 animate-spin" /> Đang lưu...</> : "Lưu thay đổi"}</Button>
+        </div>
+      </div>
+    </form>
+  </DialogContent>;
+}
 
 function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: MenuItem[] }) {
   const [tableCode, setTableCode] = useState(""); const [cart, setCart] = useState<Record<string, number>>({}); const [notes, setNotes] = useState<string[]>([]); const [otherNote, setOtherNote] = useState(""); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
