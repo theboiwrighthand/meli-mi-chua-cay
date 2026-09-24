@@ -20,6 +20,23 @@ const columns = [
 ] as const;
 const quickNotes = ["Ít cay", "Không hành", "Không giá"];
 
+const orderTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Ho_Chi_Minh",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function formatOrderTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Chưa rõ thời gian";
+  const parts = Object.fromEntries(orderTimeFormatter.formatToParts(date).map(({ type, value }) => [type, value]));
+  return `${parts.day}/${parts.month}/${parts.year}\n${parts.hour}:${parts.minute}`;
+}
+
 
 export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: MenuItem[] }) {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -149,9 +166,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                     <div>
                       <p className="text-xs font-bold text-[#9e281c]">{order.code} · {order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</p>
                       <h3 className="text-lg font-black">{order.tableCode ? `Bàn ${order.tableCode}` : "Mang về"}</h3>
+                      <p className="mt-1 text-sm text-zinc-600">Khách: <span className="font-semibold text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
                     </div>
                     <div className="flex items-start gap-2">
-                      <time className="text-xs text-zinc-500">{new Date(order.createdAt + "Z").toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</time>
+                      <time dateTime={order.createdAt} title="Giờ Việt Nam" className="shrink-0 whitespace-pre-line text-right text-xs leading-5 text-zinc-500">{formatOrderTime(order.createdAt)}</time>
                       <Checkbox checked={selectedIds.includes(order.id)} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
                     </div>
                   </div>
