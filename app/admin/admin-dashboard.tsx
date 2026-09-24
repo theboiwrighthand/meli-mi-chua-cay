@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChefHat, CircleDollarSign, Clock3, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
+import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -47,6 +47,8 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string } | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const updatingIdsRef = useRef(new Set<string>());
+  const [updatingIds, setUpdatingIds] = useState<string[]>([]);
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -72,12 +74,28 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   }, [load]);
 
   async function updateStatus(id: string, status: string) {
-    const response = await fetch(`/api/orders/${id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    if (response.ok) await load(true);
+    if (updatingIdsRef.current.has(id)) return;
+    updatingIdsRef.current.add(id);
+    setUpdatingIds([...updatingIdsRef.current]);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || "Không thể cập nhật trạng thái đơn");
+      }
+      await load(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể cập nhật trạng thái đơn");
+    } finally {
+      updatingIdsRef.current.delete(id);
+      setUpdatingIds([...updatingIdsRef.current]);
+    }
   }
 
   function requestDelete(kind: "single" | "bulk", ids: string[], label: string) {
@@ -180,7 +198,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                   <div className="flex items-center justify-between gap-2">
                     <b>{formatMoney(order.total)}</b>
                     <div className="flex items-center gap-1">
-                      {column.next && <Button size="sm" className="bg-[#a82d1e]" onClick={() => updateStatus(order.id, column.next)}>{column.action}</Button>}
+                      {column.next && <Button size="sm" className="bg-[#a82d1e]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Đang cập nhật...</> : column.action}</Button>}
                       <Button variant="ghost" size="icon-sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
                     </div>
                   </div>
