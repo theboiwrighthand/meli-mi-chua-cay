@@ -127,14 +127,8 @@ body {
 }
 
 @keyframes new-order-attention {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgb(168 45 30 / 0%);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgb(168 45 30 / 20%);
-    transform: scale(1.04);
-  }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(168 45 30 / 0%); }
+  50% { box-shadow: 0 0 0 6px rgb(168 45 30 / 20%); }
 }
 
 .animate-new-order {
@@ -147,22 +141,16 @@ body {
   }
 }
 
-@keyframes order-count-pop {
-  0% { transform: scale(.6); }
-  40% { transform: scale(1.55); }
-  70% { transform: scale(.9); }
-  100% { transform: scale(1); }
+@keyframes order-count-flash {
+  0% { box-shadow: 0 0 0 0 rgb(245 158 11 / 70%); }
+  55% { box-shadow: 0 0 0 7px rgb(245 158 11 / 35%); }
+  100% { box-shadow: 0 0 0 12px rgb(245 158 11 / 0%); }
 }
 
-@keyframes order-count-shrink {
-  0% { transform: scale(1); }
-  40% { transform: scale(.6); }
-  100% { transform: scale(1); }
-}
-
-@keyframes order-count-ring {
-  0% { opacity: .9; transform: scale(.65); }
-  100% { opacity: 0; transform: scale(2.4); }
+@keyframes order-count-dim {
+  0% { box-shadow: 0 0 0 0 rgb(185 39 23 / 60%); }
+  55% { box-shadow: 0 0 0 6px rgb(185 39 23 / 30%); }
+  100% { box-shadow: 0 0 0 10px rgb(185 39 23 / 0%); }
 }
 
 @keyframes order-count-firework {
@@ -177,17 +165,8 @@ body {
   100% { opacity: 0; transform: translate(-50%, 100%) scale(1.2); }
 }
 
-.order-count-up { animation: order-count-pop 750ms ease-out both; }
-.order-count-up::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border: 2px solid #f59e0b;
-  border-radius: 999px;
-  pointer-events: none;
-  animation: order-count-ring 850ms ease-out both;
-}
-.order-count-down { animation: order-count-shrink 650ms ease-out both; }
+.order-count-up { animation: order-count-flash 850ms ease-out both; }
+.order-count-down { animation: order-count-dim 750ms ease-out both; }
 .order-count-confetti {
   position: absolute;
   top: 50%;
@@ -210,10 +189,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .order-count-up, .order-count-down, .order-count-confetti, .order-count-minus, .order-count-up::after {
-    animation: none;
-  }
-  .order-count-confetti, .order-count-minus, .order-count-up::after { display: none; }
+  .order-count-up, .order-count-down, .order-count-confetti, .order-count-minus { animation: none; }
+  .order-count-confetti, .order-count-minus { display: none; }
 }
 
 /* Meli: the warm, lively ordering surface. */

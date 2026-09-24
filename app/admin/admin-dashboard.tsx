@@ -242,11 +242,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       </div>
     </header>
     <section className="mx-auto min-w-0 max-w-[1500px] px-4 py-4 sm:py-6">
-      <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e9d7c5] bg-[#fff7eb]/95 px-4 py-3 backdrop-blur xl:hidden">
+      <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e9d7c5] bg-[#fff7eb] px-4 py-3 xl:hidden">
         {columns.map((column) => {
           const Icon = column.icon;
           const count = orders.filter((order) => column.statuses.some((status) => status === order.status)).length;
-          return <button key={`${column.id}-${column.id === "new" ? newOrderSignal : 0}`} id={`order-tab-${column.id}`} type="button" role="tab" tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => selectMobileTab(column.id)} onKeyDown={(event) => {
+          return <button key={column.id} id={`order-tab-${column.id}`} type="button" role="tab" tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => selectMobileTab(column.id)} onKeyDown={(event) => {
             const index = columns.findIndex((entry) => entry.id === column.id);
             const nextIndex = event.key === "ArrowRight" ? (index + 1) % columns.length
               : event.key === "ArrowLeft" ? (index + columns.length - 1) % columns.length
@@ -298,7 +298,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-2xl bg-[#eaede8] p-2 sm:p-3 xl:rounded-3xl ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
-              <span className="hidden xl:inline-flex"><OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop /></span>
+              <OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop />
             </div>
             <div className="mb-2 flex items-center justify-between gap-2 px-2 text-[11px] font-semibold text-zinc-600 xl:hidden">
               <span className="inline-flex min-w-0 items-center gap-1 text-left"><ArrowLeft className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Xóa đơn" : column.id === "cooking" ? "Đơn mới" : "Chưa thanh toán"}</span>
@@ -493,7 +493,7 @@ function OrderCountBadge({ count, effect, active = false, desktop = false }: {
   desktop?: boolean;
 }) {
   return <span className="relative inline-flex shrink-0 items-center justify-center">
-    <span key={effect?.sequence ?? 0} aria-live="polite" aria-atomic="true" className={`relative min-w-6 rounded-full text-center font-black ${desktop ? "bg-white px-2.5 py-1 text-xs" : `px-1.5 py-0.5 text-xs ${active ? "bg-white/20" : "bg-[#fff0df]"}`} ${effect?.change && effect.change > 0 ? "order-count-up" : effect?.change ? "order-count-down" : ""}`}>{count}</span>
+    <span aria-live="polite" aria-atomic="true" className={`relative min-w-6 rounded-full text-center font-black ${desktop ? "bg-white px-2.5 py-1 text-xs" : `px-1.5 py-0.5 text-xs ${active ? "bg-white/20" : "bg-[#fff0df]"}`} ${effect?.change && effect.change > 0 ? "order-count-up" : effect?.change ? "order-count-down" : ""}`}>{count}</span>
     {effect && <span key={effect.sequence} aria-hidden="true" className="pointer-events-none absolute inset-0">
       {effect.change > 0 ? confettiVectors.map(([dx, dy], index) =>
         <i key={index} className="order-count-confetti" style={{
