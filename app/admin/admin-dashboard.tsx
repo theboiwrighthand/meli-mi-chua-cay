@@ -1,7 +1,6 @@
 "use client";
 
 import { type Dispatch, type FormEvent, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,7 +46,7 @@ function formatOrderTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Chưa rõ thời gian";
   const parts = Object.fromEntries(orderTimeFormatter.formatToParts(date).map(({ type, value }) => [type, value]));
-  return `${parts.day}/${parts.month}/${parts.year}\n${parts.hour}:${parts.minute}`;
+  return `${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}`;
 }
 
 
@@ -174,17 +173,16 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   }
 
   return <main className="min-h-screen overflow-x-clip bg-[#fff7eb] text-[#2e201c]">
-    <header className="border-b bg-white">
-      <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <div className="flex items-center gap-3">
-          <div className="grid size-11 place-items-center rounded-2xl bg-[#a82d1e] text-white"><Store /></div>
-          <div><h1 className="font-black">MELI · Quản lý đơn</h1><p className="text-xs text-zinc-500">Xin chào, {ownerName}</p></div>
+    <header className="border-b border-[#e9d7c5] bg-[#fffaf2]">
+      <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 px-4 py-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm"><Store className="size-5" /></div>
+          <div className="min-w-0"><h1 className="truncate text-base font-black sm:text-lg">MELI · Quản lý đơn</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">Xin chào, {ownerName}</p></div>
         </div>
-        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
-          <Button variant="outline" size="icon" onClick={() => load()} aria-label="Làm mới"><RefreshCw /></Button>
-          <Link href="/"><Button variant="outline"><span className="sm:hidden">Menu</span><span className="hidden sm:inline">Menu khách</span></Button></Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="ghost" size="icon" className="size-11 rounded-lg bg-[#e7ece8] hover:bg-[#dce3de]" onClick={() => load()} aria-label="Làm mới"><RefreshCw className="size-4" /></Button>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="bg-[#bd3b22] hover:bg-[#9e281c]"><Plus /> Tạo đơn</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className="h-11 rounded-lg bg-[#b92717] px-3.5 font-bold hover:bg-[#9e281c] sm:px-4"><Plus className="size-4" /> Tạo đơn</Button></DialogTrigger>
             <CreateOrderDialog menu={menu} onCreated={() => { setOpen(false); load(true); }} />
           </Dialog>
         </div>
@@ -250,31 +248,38 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             </div>
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
-                <article key={order.id} className="min-w-0 overflow-hidden rounded-xl bg-white p-3 shadow-sm sm:rounded-2xl sm:p-4">
-                  <div className="flex min-w-0 items-start justify-between gap-2">
-                    <p className="min-w-0 break-words text-[11px] font-bold text-[#9e281c] sm:text-xs">{order.code} · {order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</p>
-                    <time dateTime={order.createdAt} title="Giờ Việt Nam" className="shrink-0 whitespace-pre-line text-right text-[11px] leading-4 text-zinc-500 sm:text-xs sm:leading-5">{formatOrderTime(order.createdAt)}</time>
-                  </div>
-                  <div className="mt-1 flex min-w-0 items-center justify-between gap-2">
-                    <h3 className="min-w-0 break-words text-lg font-black">{order.tableCode ? `Bàn ${order.tableCode}` : "Mang về"}</h3>
-                    <Checkbox checked={selectedIds.includes(order.id)} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
-                  </div>
-                  <p className="mt-1 break-words text-sm text-zinc-600">Khách: <span className="font-semibold text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
-                  <div className="my-3 space-y-1 border-y py-3">{order.items.map((item) =>
-                    <div key={item.id} className="flex min-w-0 justify-between gap-2 text-sm">
-                      <span className="min-w-0 break-words"><b>{item.quantity}×</b> {item.itemName}</span>
-                      <span className="shrink-0">{formatMoney(item.price * item.quantity)}</span>
+                <article key={order.id} className="min-w-0 overflow-hidden rounded-xl border border-[#c83220] bg-white shadow-sm">
+                  <div className="p-3 sm:p-4">
+                    <div className="flex min-w-0 items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-start gap-2.5">
+                        <Checkbox className="mt-0.5 size-5 border-[#b92717] data-[state=checked]:border-[#b92717] data-[state=checked]:bg-[#b92717]" checked={selectedIds.includes(order.id)} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
+                        <div className="min-w-0">
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs">
+                            <span className="max-w-full break-all rounded bg-[#fff0ed] px-1.5 py-0.5 font-bold text-[#a82d1e]">{order.code}</span>
+                            <span className="text-zinc-600">{order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</span>
+                            <time dateTime={order.createdAt} title="Giờ Việt Nam" className="whitespace-nowrap text-zinc-500">{formatOrderTime(order.createdAt)}</time>
+                          </div>
+                          <h3 className="mt-1.5 min-w-0 break-words text-lg font-black leading-tight">{order.tableCode ? `Bàn ${order.tableCode}` : "Mang về"}</h3>
+                        </div>
+                      </div>
+                      {column.next && <Button size="sm" className="h-9 shrink-0 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : column.action}</Button>}
                     </div>
-                  )}</div>
-                  {order.note && <p className="mb-3 break-words rounded-xl bg-[#fff0df] p-2 text-xs"><b>Ghi chú:</b> {order.note}</p>}
-                  <div className="flex min-w-0 items-center justify-between gap-2">
-                    <b className="min-w-0 text-base">{formatMoney(order.total)}</b>
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="mt-3 divide-y border-y">{order.items.map((item) =>
+                      <div key={item.id} className="flex min-w-0 items-center justify-between gap-2 py-2.5 text-sm">
+                        <span className="min-w-0 break-words"><b className="mr-1.5 text-[#b92717]">{item.quantity}×</b>{item.itemName}</span>
+                        <span className="shrink-0 font-medium">{formatMoney(item.price * item.quantity)}</span>
+                      </div>
+                    )}</div>
+                    {order.note && <p className="mt-2 break-words rounded bg-[#f5f0ed] px-2.5 py-2 text-xs italic text-[#9e281c]"><b>Ghi chú:</b> {order.note}</p>}
+                  </div>
+                  <div className="flex min-w-0 items-center gap-1.5 border-t bg-[#fffdf9] px-3 py-2.5 sm:px-4">
+                    <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-600" title={order.customerName?.trim() || "Chưa cung cấp"}>Khách: <span className="font-medium text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
+                    <div className="flex shrink-0 items-center gap-0.5">
                       {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} className="text-[#a82d1e] hover:bg-[#fff0df]" onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
                       <Button variant="ghost" size="icon-sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
                     </div>
+                    <b className="shrink-0 text-base text-[#b92717] sm:text-lg">{formatMoney(order.total)}</b>
                   </div>
-                  {column.next && <Button size="sm" className="mt-3 w-full bg-[#a82d1e]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Đang cập nhật...</> : column.action}</Button>}
                 </article>
               )}
             </div>
