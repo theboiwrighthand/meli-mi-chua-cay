@@ -53,13 +53,13 @@
   --sidebar-accent-foreground: #171717;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #a1a1a1;
-  --brand-green: #0b5d3b;
-  --brand-green-soft: #e8f2ec;
-  --brand-orange: #dc5a25;
-  --brand-peach: #f8d8c5;
-  --brand-cream: #f7f4ec;
-  --brand-ink: #183228;
-  --brand-muted: #68756e;
+  --brand-green: #a82d1e;
+  --brand-green-soft: #fce9dc;
+  --brand-orange: #b93622;
+  --brand-peach: #f4c6a5;
+  --brand-cream: #fff7eb;
+  --brand-ink: #2e201c;
+  --brand-muted: #7c6b61;
 }
 
 @theme inline {
@@ -124,4 +124,102 @@ body {
 ::selection {
   background: var(--brand-peach);
   color: var(--brand-ink);
+}
+
+/* Meli: the warm, lively ordering surface. */
+.meli-hero {
+  position: relative;
+  min-height: 216px;
+  overflow: hidden;
+  background: radial-gradient(circle at 62% 18%, #cc5632 0, transparent 32%), linear-gradient(105deg, #9e281c 0%, #b83722 62%, #751c16 100%);
+  color: #fff6e9;
+}
+.meli-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .18;
+  background-image: radial-gradient(circle, #ffe1a7 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(to right, #000, transparent 82%);
+}
+.meli-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+  max-width: 1320px;
+  min-height: 216px;
+  margin: auto;
+  padding: 1.5rem 2rem;
+}
+.meli-brand { align-self: flex-start; display: flex; align-items: center; gap: .5rem; white-space: nowrap; }
+.meli-brand > span { font-size: 2rem; }
+.meli-brand strong { display: block; font-size: 2.15rem; font-weight: 800; letter-spacing: -.07em; line-height: 1; }
+.meli-brand small { display: block; margin-top: .25rem; font-size: .63rem; font-weight: 700; letter-spacing: .24em; }
+.meli-hero-copy { flex: 1; max-width: 440px; padding-left: 1rem; }
+.meli-hero-copy > span { font-size: .75rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: #ffdbb3; }
+.meli-hero-copy h1 { margin-top: .5rem; font-size: clamp(2rem, 3.6vw, 3.25rem); font-weight: 800; line-height: 1.13; letter-spacing: -.04em; }
+.meli-hero-copy em { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.02em; }
+.meli-hero-copy p { margin-top: .7rem; color: #ffe5ce; }
+.meli-hero-photo { position: absolute; inset: -85px -20px -130px auto; width: min(46%, 590px); transform: rotate(-12deg); border-radius: 50%; overflow: hidden; border: 10px solid #fff0d7; box-shadow: 0 15px 40px #4511098a; }
+.meli-hero-photo img { transform: rotate(12deg) scale(1.22); }
+.meli-table-badge { align-self: flex-start; border: 1px solid #ffdfc6; border-radius: 999px; background: #fff5e9; padding: .5rem .9rem; font-size: .9rem; font-weight: 800; color: #8f291d; }
+.meli-layout { align-items: start; }
+.meli-tabs { display: flex; gap: .45rem; overflow-x: auto; padding: .1rem .1rem 1rem; scrollbar-width: none; border-bottom: 1px solid #e9dac7; }
+.meli-tabs::-webkit-scrollbar { display: none; }
+.meli-tab { display: flex; align-items: center; justify-content: center; gap: .45rem; flex: none; min-height: 44px; border-radius: 12px; padding: 0 1rem; font-size: .87rem; font-weight: 700; color: #6c4033; transition: background-color .2s, color .2s; }
+.meli-tab:hover { background: #f8e6d4; }
+.meli-tab-active { background: #a82d1e; color: white; box-shadow: 0 4px 10px #a82d1e33; }
+.meli-tab-active:hover { background: #902417; }
+.meli-menu-note { margin: .8rem 0 1.7rem; color: #a82d1e; font-size: .85rem; font-weight: 700; }
+.meli-menu-note span { color: #937f70; font-weight: 400; }
+.meli-section-heading { border-bottom: 1px solid #ecdcc8; }
+.meli-section-heading h2 { color: #512319; }
+.meli-section-heading h2::before { content: "✦"; margin-right: .35rem; color: #d66230; font-size: .85em; }
+.meli-food-card { min-width: 0; overflow: hidden; border: 1px solid #f1dfca; border-radius: 16px; background: #fffdf8; box-shadow: 0 5px 15px #8e49210e; transition: transform .18s, box-shadow .18s; }
+.meli-food-card:hover { transform: translateY(-2px); box-shadow: 0 12px 22px #8e492125; }
+.meli-food-image { position: relative; height: 150px; overflow: hidden; background: #f5e6d5; }
+.meli-food-image img { transition: transform .4s; }
+.meli-food-card:hover .meli-food-image img { transform: scale(1.06); }
+.meli-food-content { display: flex; min-height: 126px; flex-direction: column; padding: .75rem; }
+.meli-food-content h3 { color: #321d17; font-size: .95rem; font-weight: 800; line-height: 1.3; }
+.meli-food-content p { margin-top: .28rem; color: #827063; font-size: .75rem; line-height: 1.35; }
+.meli-food-bottom { display: flex; align-items: end; justify-content: space-between; gap: .3rem; margin-top: auto; padding-top: .6rem; }
+.meli-food-bottom > strong { color: #ac321e; font-size: .95rem; white-space: nowrap; }
+.meli-add-button { width: 40px; height: 40px; flex: none; border-radius: 10px; background: #b53622; color: white; }
+.meli-add-button:hover { background: #922515; }
+.meli-quantity { flex: none; }
+.meli-quantity button { width: 34px; height: 38px; color: #a82d1e; }
+.meli-quantity strong { width: 17px; }
+.meli-cart { overflow: hidden; border: 1px solid #f0d9c1; border-radius: 18px; background: #fffaf2; box-shadow: 0 10px 30px #974b1818; }
+.meli-cart form > div:first-child { background: #fffaf2; }
+.meli-cart form > div:last-child { background: #fff4e6; }
+@media (max-width: 1023px) {
+  .meli-hero, .meli-hero-inner { min-height: 180px; }
+  .meli-hero-photo { width: 45%; inset: -60px -8% -95px auto; }
+  .meli-hero-copy { margin-right: 32%; }
+}
+@media (max-width: 639px) {
+  .meli-hero, .meli-hero-inner { min-height: 180px; }
+  .meli-hero-inner { display: block; padding: 1rem; }
+  .meli-brand > span { font-size: 1.35rem; }
+  .meli-brand strong { font-size: 1.6rem; }
+  .meli-brand small { font-size: .5rem; }
+  .meli-hero-copy { position: relative; z-index: 2; margin: 1.2rem 30% 0 0; padding: 0; }
+  .meli-hero-copy > span { display: none; }
+  .meli-hero-copy h1 { font-size: 1.8rem; }
+  .meli-hero-copy p { font-size: .75rem; }
+  .meli-hero-photo { width: 58%; inset: -5px -27% -45px auto; border-width: 6px; }
+  .meli-table-badge { position: absolute; right: 1rem; top: 1rem; font-size: .75rem; padding: .4rem .6rem; }
+  .meli-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+  .meli-food-image { height: 115px; }
+  .meli-food-content { min-height: 137px; padding: .65rem; }
+  .meli-food-content h3 { font-size: .82rem; }
+  .meli-food-bottom { align-items: flex-end; flex-wrap: wrap; }
+  .meli-food-bottom > strong { font-size: .85rem; }
+  .meli-menu-note { font-size: .75rem; }
 }
