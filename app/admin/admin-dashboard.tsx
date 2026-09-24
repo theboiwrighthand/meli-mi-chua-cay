@@ -580,6 +580,8 @@ type EditLine = {
   name: string;
   price: number;
   quantity: number;
+  notes: string[];
+  otherNote: string;
 };
 
 function EditOrderDialog({
@@ -601,6 +603,7 @@ function EditOrderDialog({
   const [lines, setLines] = useState<EditLine[]>(() => order.items.map((item) => ({
     key: `existing-${item.id}`, existingId: item.id, menuItemId: item.menuItemId,
     name: item.itemName, price: item.price, quantity: item.quantity,
+    notes: parseOrderNote(item.notes).notes, otherNote: parseOrderNote(item.notes).otherNote,
   })));
   const [selectedMenuId, setSelectedMenuId] = useState("");
   const [saving, setSaving] = useState(false);
@@ -624,6 +627,7 @@ function EditOrderDialog({
       return [...current, {
         key: `new-${item.id}`, menuItemId: item.id, name: item.name,
         price: item.price, quantity: 1,
+        notes: [], otherNote: "",
       }];
     });
     setSelectedMenuId("");
@@ -643,9 +647,11 @@ function EditOrderDialog({
           tableCode: isTakeaway ? "" : tableCode,
           orderType: isTakeaway ? "takeaway" : "dine_in",
           customerName, note: composeOrderNote(notes, otherNote),
-          items: lines.map((line) => line.existingId
-            ? { id: line.existingId, quantity: line.quantity }
-            : { menuItemId: line.menuItemId, quantity: line.quantity }),
+          items: lines.map((line) => ({
+            ...(line.existingId ? { id: line.existingId } : { menuItemId: line.menuItemId }),
+            quantity: line.quantity,
+            notes: [...line.notes, line.otherNote.trim()].filter(Boolean),
+          })),
         }),
       });
       const result = await response.json().catch(() => null);
@@ -682,15 +688,26 @@ function EditOrderDialog({
       <div>
         <p className="mb-2 text-sm font-bold">Món trong đơn</p>
         <div className="space-y-2">
-          {lines.map((line) => <div key={line.key} className="flex items-center gap-2 rounded-xl border p-2">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{line.name}</p>
-              <p className="text-xs text-zinc-500">{formatMoney(line.price)} / món</p>
+          {lines.map((line) => <div key={line.key} className="rounded-xl border p-2">
+            <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{line.name}</p>
+                <p className="text-xs text-zinc-500">{formatMoney(line.price)} / món</p>
+              </div>
+              <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity <= 1} onClick={() => changeQuantity(line.key, -1)} aria-label={`Giảm ${line.name}`}>−</Button>
+              <span className="w-5 text-center text-sm font-bold">{line.quantity}</span>
+              <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity >= 20} onClick={() => changeQuantity(line.key, 1)} aria-label={`Thêm ${line.name}`}>+</Button>
+              <Button type="button" size="icon-sm" variant="ghost" disabled={saving} onClick={() => setLines((current) => current.filter((entry) => entry.key !== line.key))} aria-label={`Bỏ ${line.name}`} className="text-red-700"><Trash2 className="size-4" /></Button>
             </div>
-            <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity <= 1} onClick={() => changeQuantity(line.key, -1)} aria-label={`Giảm ${line.name}`}>−</Button>
-            <span className="w-5 text-center text-sm font-bold">{line.quantity}</span>
-            <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity >= 20} onClick={() => changeQuantity(line.key, 1)} aria-label={`Thêm ${line.name}`}>+</Button>
-            <Button type="button" size="icon-sm" variant="ghost" disabled={saving} onClick={() => setLines((current) => current.filter((entry) => entry.key !== line.key))} aria-label={`Bỏ ${line.name}`} className="text-red-700"><Trash2 className="size-4" /></Button>
+            <details className="mt-2 text-sm">
+              <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{line.notes.length || line.otherNote ? " · Đã chọn" : ""}</summary>
+              <fieldset disabled={saving} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${line.name}`}>
+                {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-sm">
+                  <Checkbox checked={line.notes.includes(note)} onCheckedChange={(checked) => setLines((current) => current.map((entry) => entry.key === line.key ? { ...entry, notes: checked ? [...entry.notes, note] : entry.notes.filter((value) => value !== note) } : entry))} />{note}
+                </label>)}
+              </fieldset>
+              <Input className="mt-2 h-10" aria-label={`Ghi chú khác cho ${line.name}`} placeholder="Ghi chú khác cho món này..." maxLength={200} disabled={saving} value={line.otherNote} onChange={(event) => setLines((current) => current.map((entry) => entry.key === line.key ? { ...entry, otherNote: event.target.value } : entry))} />
+            </details>
           </div>)}
           {!lines.length && <p className="rounded-xl border border-dashed p-3 text-sm text-zinc-500">Hãy thêm ít nhất một món.</p>}
         </div>
@@ -749,6 +766,8 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
   const [tableCode, setTableCode] = useState("");
   const [isTakeaway, setIsTakeaway] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [itemNotes, setItemNotes] = useState<Record<string, string[]>>({});
+  const [itemOtherNotes, setItemOtherNotes] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<string[]>([]);
   const [otherNote, setOtherNote] = useState("");
   const [saving, setSaving] = useState(false);
@@ -760,6 +779,8 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
     setTableCode("");
     setIsTakeaway(false);
     setCart({});
+    setItemNotes({});
+    setItemOtherNotes({});
     setNotes([]);
     setOtherNote("");
     setError("");
@@ -779,7 +800,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
           tableCode: normalizedTableCode,
           orderType: isTakeaway ? "takeaway" : "dine_in",
           note: composeOrderNote(notes, otherNote),
-          items: selected.map((item) => ({ id: item.id, quantity: cart[item.id], notes })),
+          items: selected.map((item) => ({ id: item.id, quantity: cart[item.id], notes: [...(itemNotes[item.id] ?? []), itemOtherNotes[item.id]?.trim()].filter(Boolean) })),
         }),
       });
       const result = await response.json().catch(() => null);
@@ -793,7 +814,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
     }
   }
 
-  return <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
+  return <DialogContent className="meli-admin-create-sheet max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
     <DialogHeader>
       <DialogTitle ref={titleRef} tabIndex={-1} className="text-2xl outline-none">Tạo đơn tại quầy</DialogTitle>
       <DialogDescription>Chọn món và hình thức dùng món.</DialogDescription>
@@ -808,14 +829,25 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
     <div className="grid gap-2 sm:grid-cols-2">
       {menu.map((item) => {
         const quantity = cart[item.id] ?? 0;
-        return <div key={item.id} className="flex items-center gap-2 rounded-xl border p-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-bold">{item.name}</p>
-            <p className="text-sm text-[#9e281c]">{formatMoney(item.price)}</p>
+        return <div key={item.id} className="rounded-xl border p-3">
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-bold">{item.name}</p>
+              <p className="text-sm text-[#9e281c]">{formatMoney(item.price)}</p>
+            </div>
+            <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity <= 0} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} aria-label={`Giảm ${item.name}`}>−</Button>
+            <b className="w-5 text-center">{quantity}</b>
+            <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity >= 20} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.min(20, (current[item.id] ?? 0) + 1) }))} aria-label={`Thêm ${item.name}`}>+</Button>
           </div>
-          <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity <= 0} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} aria-label={`Giảm ${item.name}`}>−</Button>
-          <b className="w-5 text-center">{quantity}</b>
-          <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity >= 20} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.min(20, (current[item.id] ?? 0) + 1) }))} aria-label={`Thêm ${item.name}`}>+</Button>
+          {quantity > 0 && <details className="mt-2 text-sm">
+            <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{(itemNotes[item.id]?.length || itemOtherNotes[item.id]) ? " · Đã chọn" : ""}</summary>
+            <fieldset disabled={saving} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${item.name}`}>
+              {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-sm">
+                <Checkbox checked={(itemNotes[item.id] ?? []).includes(note)} onCheckedChange={(checked) => setItemNotes((current) => ({ ...current, [item.id]: checked ? [...(current[item.id] ?? []), note] : (current[item.id] ?? []).filter((value) => value !== note) }))} />{note}
+              </label>)}
+            </fieldset>
+            <Input className="mt-2 h-10" aria-label={`Ghi chú khác cho ${item.name}`} placeholder="Ghi chú khác cho món này..." maxLength={200} disabled={saving} value={itemOtherNotes[item.id] ?? ""} onChange={(event) => setItemOtherNotes((current) => ({ ...current, [item.id]: event.target.value }))} />
+          </details>}
         </div>;
       })}
     </div>

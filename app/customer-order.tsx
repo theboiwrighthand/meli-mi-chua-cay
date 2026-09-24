@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { Check, ChevronRight, Coffee, Flame, LayoutDashboard, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { Check, ChevronRight, Coffee, Flame, LayoutDashboard, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed, Soup, Truck, CookingPot } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatMoney, type MenuItem } from "@/lib/menu";
 
-type CartLine = MenuItem & { quantity: number };
+type CartLine = MenuItem & { quantity: number; notes: string[]; otherNote: string };
 
 const groups: Array<{ id: MenuItem["category"]; title: string }> = [
   { id: "mains", title: "Mì chua cay" },
@@ -78,10 +78,14 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
       const next = { ...current };
 
       if (quantity <= 0) delete next[item.id];
-      else next[item.id] = { ...item, quantity };
+      else next[item.id] = { ...item, quantity, notes: current[item.id]?.notes ?? [], otherNote: current[item.id]?.otherNote ?? "" };
 
       return next;
     });
+  }
+
+  function updateLine(id: string, patch: Partial<Pick<CartLine, "notes" | "otherNote">>) {
+    setCart((current) => current[id] ? { ...current, [id]: { ...current[id], ...patch } } : current);
   }
 
   function scrollToGroup(id: string) {
@@ -105,7 +109,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
           orderType: isTakeaway ? "takeaway" : "dine_in",
           customerName,
           note: [...notes, otherNote].filter(Boolean).join(", "),
-          items: lines.map((line) => ({ id: line.id, quantity: line.quantity, notes })),
+          items: lines.map((line) => ({ id: line.id, quantity: line.quantity, notes: [...line.notes, line.otherNote.trim()].filter(Boolean) })),
         }),
       });
       const result = (await response.json().catch(() => null)) as {
@@ -142,6 +146,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
     error,
     submitting,
     change,
+    updateLine,
     setTableCode,
     setIsTakeaway: (next: boolean) => {
       setIsTakeaway(next);
@@ -187,10 +192,10 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
     <main className="min-h-screen bg-brand-cream text-brand-ink">
       <header className="meli-hero">
         <div className="meli-hero-photo" aria-hidden="true">
-          <Image src={itemPhotos.mains[1]} alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" />
+          <Image src="/noodle-hero.webp" alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" />
         </div>
         <div className="meli-hero-inner">
-          <div className="meli-brand"><span aria-hidden="true">🍜</span><div><strong>Meli</strong><small>MÌ CHUA CAY</small></div></div>
+          <div className="meli-brand"><Soup aria-hidden="true" className="size-8 text-[#ffdb9c]" /><div><strong>Meli</strong><small>MÌ CHUA CAY</small></div></div>
           <div className="meli-hero-copy"><span>Hương vị thân quen · Nghĩa Tân</span><h1>Ăn là mê,<br /><em>Mì là Meli.</em></h1><p>Chọn món ngon, quán làm ngay.</p></div>
           <div className="meli-hero-actions">
             {tableCode.trim() && !isTakeaway && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
@@ -205,7 +210,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
             <button type="button" onClick={() => scrollToGroup("menu-list")} className={`meli-tab ${activeCategory === "all" ? "meli-tab-active" : ""}`}><Flame size={16} /> Tất cả</button>
             {groups.map((group) => (
               <button key={group.id} type="button" className={`meli-tab ${activeCategory === group.id ? "meli-tab-active" : ""}`} onClick={() => scrollToGroup(group.id)}>
-                {group.id === "drinks" ? <Coffee size={16} /> : <UtensilsCrossed size={16} />}{group.title}
+                {group.id === "drinks" ? <Coffee size={16} /> : group.id === "mains" ? <Soup size={16} /> : <CookingPot size={16} />}{group.title}
               </button>
             ))}
           </nav>
@@ -218,7 +223,10 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
               return (
                 <section key={group.id} id={group.id} className="scroll-mt-6">
                   <div className="meli-section-heading mb-4 flex items-baseline justify-between pb-3">
-                    <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">{group.title}</h2>
+                    <h2 className="flex items-center gap-2 text-xl font-extrabold tracking-tight sm:text-2xl">
+                      {group.id === "mains" ? <Soup aria-hidden="true" className="size-6 text-brand-orange" /> : group.id === "extras" ? <CookingPot aria-hidden="true" className="size-6 text-brand-orange" /> : <Coffee aria-hidden="true" className="size-6 text-brand-orange" />}
+                      {group.title}
+                    </h2>
                     <span className="text-sm text-brand-muted">{items.length} món</span>
                   </div>
                   <div className="meli-item-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -280,7 +288,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
 
       <Dialog open={cartOpen} onOpenChange={setCartOpen}>
         <DialogContent
-          className="bottom-0 top-auto flex max-h-[92dvh] w-full max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-2xl border-brand-green/10 bg-[#fffaf2] p-0 text-brand-ink sm:max-w-none lg:hidden"
+          className="meli-mobile-sheet bottom-0 top-auto flex max-h-[92dvh] w-full max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-2xl border-brand-green/10 bg-[#fffaf2] p-0 text-brand-ink sm:max-w-none lg:hidden"
           overlayClassName="lg:hidden"
         >
           <DialogHeader className="shrink-0 border-b border-brand-green/10 p-5 pr-16 text-left">
@@ -341,6 +349,7 @@ type CartFormProps = {
   error: string;
   submitting: boolean;
   change: (item: MenuItem, delta: number) => void;
+  updateLine: (id: string, patch: Partial<Pick<CartLine, "notes" | "otherNote">>) => void;
   setTableCode: (value: string) => void;
   setIsTakeaway: (value: boolean) => void;
   setCustomerName: (value: string) => void;
@@ -362,6 +371,7 @@ function CartForm({
   error,
   submitting,
   change,
+  updateLine,
   setTableCode,
   setIsTakeaway,
   setCustomerName,
@@ -394,12 +404,23 @@ function CartForm({
         ) : (
           <div className="divide-y divide-brand-green/10 border-y border-brand-green/10">
             {lines.map((line) => (
-              <div key={line.id} className="flex items-center gap-2 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{line.name}</p>
-                  <p className="mt-0.5 text-sm text-brand-orange">{formatMoney(line.price * line.quantity)}</p>
+              <div key={line.id} className="py-3">
+                <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{line.name}</p>
+                    <p className="mt-0.5 text-sm text-brand-orange">{formatMoney(line.price * line.quantity)}</p>
+                  </div>
+                  <QuantityControl item={line} quantity={line.quantity} disabled={submitting} change={change} />
                 </div>
-                <QuantityControl item={line} quantity={line.quantity} disabled={submitting} change={change} />
+                <details className="mt-2 text-sm">
+                  <summary className="cursor-pointer font-semibold text-brand-green">Ghi chú riêng cho {line.name}{line.notes.length || line.otherNote ? " · Đã chọn" : ""}</summary>
+                  <fieldset disabled={submitting} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${line.name}`}>
+                    {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-brand-green/15 bg-white px-2 text-sm">
+                      <Checkbox checked={line.notes.includes(note)} onCheckedChange={(checked) => updateLine(line.id, { notes: checked ? [...line.notes, note] : line.notes.filter((value) => value !== note) })} />{note}
+                    </label>)}
+                  </fieldset>
+                  <Input className="mt-2 h-10 bg-white" aria-label={`Ghi chú khác cho ${line.name}`} placeholder="Ghi chú khác cho món này..." maxLength={200} disabled={submitting} value={line.otherNote} onChange={(event) => updateLine(line.id, { otherNote: event.target.value })} />
+                </details>
               </div>
             ))}
           </div>
@@ -420,6 +441,7 @@ function CartForm({
             </label>
             <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-green/15 bg-white px-3 text-sm font-semibold">
               <Checkbox checked={isTakeaway} disabled={submitting} onCheckedChange={(checked) => setIsTakeaway(checked === true)} />
+              <Truck aria-hidden="true" className="size-5 text-[#13978b]" />
               Mang về
             </label>
           </div>
@@ -437,7 +459,7 @@ function CartForm({
           </label>
 
           <fieldset disabled={submitting}>
-            <legend className="text-sm font-semibold">Yêu cầu cho món</legend>
+            <legend className="text-sm font-semibold">Yêu cầu chung cho đơn</legend>
             <div className="mt-2 flex flex-wrap gap-2">
               {quickNotes.map((note) => {
                 const selected = notes.includes(note);

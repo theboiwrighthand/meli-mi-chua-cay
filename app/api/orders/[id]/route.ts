@@ -40,7 +40,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 }
 
-type EditedItem = { id?: number; menuItemId?: string; quantity: number };
+type EditedItem = { id?: number; menuItemId?: string; quantity: number; notes?: string[] };
 type EditPayload = { tableCode: string; orderType: string; customerName: string; note: string; items: EditedItem[] };
 
 class OrderEditError extends Error {
@@ -68,6 +68,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     if (!item || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 20) {
       return Response.json({ error: "Số lượng món phải từ 1 đến 20" }, { status: 400 });
     }
+    if (item.notes !== undefined && (!Array.isArray(item.notes) || item.notes.length > 8 || !item.notes.every((note) => typeof note === "string" && note.length <= 200))) {
+      return Response.json({ error: "Ghi chú món không hợp lệ" }, { status: 400 });
+    }
     const existing = Number.isSafeInteger(item.id) && (item.id ?? 0) > 0 && item.menuItemId === undefined;
     const added = typeof item.menuItemId === "string" && item.menuItemId.length > 0 && item.menuItemId.length <= 128 && item.id === undefined;
     if (!existing && !added) return Response.json({ error: "Món trong đơn không hợp lệ" }, { status: 400 });
@@ -92,11 +95,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
         if (item.id !== undefined) {
           const previous = existingById.get(item.id);
           if (!previous) throw new OrderEditError("Món này không còn thuộc đơn, hãy tải lại trang", 409);
-          return { orderId: id, menuItemId: previous.menuItemId, itemName: previous.itemName, price: previous.price, quantity: item.quantity, notes: previous.notes };
+          return { orderId: id, menuItemId: previous.menuItemId, itemName: previous.itemName, price: previous.price, quantity: item.quantity, notes: item.notes ? item.notes.join(", ").slice(0, 500) : previous.notes };
         }
         const selected = activeMenu.get(item.menuItemId!);
         if (!selected) throw new OrderEditError("Món vừa chọn đã ngừng bán, hãy tải lại menu", 409);
-        return { orderId: id, menuItemId: item.menuItemId!, itemName: String(selected.name), price: Number(selected.price), quantity: item.quantity, notes: "" };
+        return { orderId: id, menuItemId: item.menuItemId!, itemName: String(selected.name), price: Number(selected.price), quantity: item.quantity, notes: (item.notes ?? []).join(", ").slice(0, 500) };
       });
       const total = lines.reduce((sum, item) => sum + item.price * item.quantity, 0);
       if (!Number.isSafeInteger(total) || total > 2147483647) throw new OrderEditError("Tổng tiền không hợp lệ", 400);
