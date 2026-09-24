@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    remotePatterns: [{ protocol: "https", hostname: "thumb.wikimedia.org", pathname: "/wikipedia/commons/thumb/**" }],
+    remotePatterns: [{ protocol: "https", hostname: "down-bs-vn.img.susercontent.com", pathname: "/**" }],
   },
 };
 

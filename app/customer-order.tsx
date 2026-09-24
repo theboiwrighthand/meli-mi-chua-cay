@@ -30,7 +30,14 @@ const maxQuantity = 20;
 
 // Only attach a photo when it really depicts the product; the rest use a category illustration.
 const itemPhotos: Record<string, string> = {
-  quay: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Youtiao.jpg/640px-Youtiao.jpg",
+  "mi-tim-cat": "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lqz49vpvbnvd94",
+  "mi-bo-moc": "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lqz49uh751ac33",
+  "mi-tim-cat-moc": "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lqz49waehm6xb9",
+  "mi-bo-tim-cat": "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lqz49v487c0p5b",
+  "mi-dac-biet": "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lqz49qc772qh6b",
+  quay: "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lqz49rixgjo9c1",
+  "mi-them": "https://down-bs-vn.img.susercontent.com/vn-11134517-7r98o-lr3qpgn4ztlle4",
+  "trung-non": "https://down-bs-vn.img.susercontent.com/vn-11134517-81ztc-mps2tr0uwmipa9",
 };
 
 function MenuItemPicture({ item }: { item: MenuItem }) {
@@ -39,9 +46,9 @@ function MenuItemPicture({ item }: { item: MenuItem }) {
   return (
     <div className={`meli-food-image meli-food-image-${item.category}`}>
       {src && !failed ? (
-        <Image src={src} alt={`Ảnh minh họa ${item.name}`} fill sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" onError={() => setFailed(true)} />
+        <Image src={src} alt={`Ảnh minh họa ${item.name}`} fill unoptimized sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" onError={() => setFailed(true)} />
       ) : (
-        <div className="meli-food-placeholder" role="img" aria-label={`Hình đại diện nhóm ${item.category === "mains" ? "mì chua cay" : item.category === "extras" ? "ăn kèm" : "đồ uống"}`}>
+        <div className="meli-food-placeholder" style={{ display: "flex", width: "100%", height: "100%", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }} role="img" aria-label={`Hình đại diện nhóm ${item.category === "mains" ? "mì chua cay" : item.category === "extras" ? "ăn kèm" : "đồ uống"}`}>
           {item.category === "mains" ? <Soup aria-hidden="true" /> : item.category === "extras" ? <CookingPot aria-hidden="true" /> : <Coffee aria-hidden="true" />}
           <span>{item.category === "mains" ? "Mì chua cay" : item.category === "extras" ? "Ăn kèm" : "Đồ uống"}</span>
         </div>
