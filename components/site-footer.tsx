@@ -1,4 +1,4 @@
-import { Facebook, MapPin, Phone } from "lucide-react";
+import { ExternalLink, MapPin, Phone } from "lucide-react";
 
 const mapSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.7688664832754!2d105.79073577596986!3d21.041932287324663!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab0e70774da1%3A0x47c2f6c94a594006!2sM%E1%BB%B3%20Chua%20Cay%20Meli!5e0!3m2!1svi!2s!4v1790269382949!5m2!1svi!2s";
 
@@ -25,7 +25,7 @@ export function SiteFooter() {
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Facebook aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-[#f3bc77]" />
+              <ExternalLink aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-[#f3bc77]" />
               <div>
                 <p className="font-semibold">Facebook</p>
                 <a className="mt-1 inline-block break-all rounded-sm text-[#f4e5d8] underline decoration-[#f3bc77] underline-offset-4 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3bc77]" href="https://www.facebook.com/michuacaymeli" target="_blank" rel="noopener noreferrer">Mì Chua Cay Meli</a>
