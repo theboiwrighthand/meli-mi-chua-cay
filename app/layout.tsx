@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -25,7 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={`${beVietnamPro.variable} antialiased`}>{children}</body>
+      <body className={`${beVietnamPro.variable} antialiased`}>
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }
