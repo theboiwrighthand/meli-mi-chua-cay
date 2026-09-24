@@ -126,6 +126,27 @@ body {
   color: var(--brand-ink);
 }
 
+@keyframes new-order-attention {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgb(168 45 30 / 0%);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgb(168 45 30 / 20%);
+    transform: scale(1.04);
+  }
+}
+
+.animate-new-order {
+  animation: new-order-attention 650ms ease-in-out 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-new-order {
+    animation: none;
+  }
+}
+
 /* Meli: the warm, lively ordering surface. */
 .meli-hero {
   position: relative;

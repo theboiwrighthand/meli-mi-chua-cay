@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type FormEvent, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,18 @@ const columns = [
 ] as const;
 const quickNotes = ["Ít cay", "Không hành", "Không giá"];
 type OrderStatus = (typeof columns)[number]["id"];
+
+function parseOrderNote(note: string) {
+  const parts = note.split(",").map((part) => part.trim()).filter(Boolean);
+  return {
+    notes: quickNotes.filter((quickNote) => parts.includes(quickNote)),
+    otherNote: parts.filter((part) => !quickNotes.includes(part)).join(", "),
+  };
+}
+
+function composeOrderNote(notes: string[], otherNote: string) {
+  return [...notes, otherNote.trim()].filter(Boolean).join(", ");
+}
 
 const orderTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Ho_Chi_Minh",
@@ -52,7 +64,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [editTarget, setEditTarget] = useState<Order | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const updatingIdsRef = useRef(new Set<string>());
+  const knownOrderIdsRef = useRef<Set<string> | null>(null);
+  const mobileTabRef = useRef<OrderStatus>("new");
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
+  const [newOrderSignal, setNewOrderSignal] = useState(0);
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -60,9 +75,24 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       const response = await fetch("/api/orders", { cache: "no-store" });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      setOrders(result.orders);
-      const availableIds = new Set<string>(result.orders.map((order: Order) => order.id));
+      const nextOrders = result.orders as Order[];
+      const availableIds = new Set<string>(nextOrders.map((order) => order.id));
+      const hasNewOrder = knownOrderIdsRef.current !== null
+        && nextOrders.some((order) => order.status === "new" && !knownOrderIdsRef.current?.has(order.id));
+
+      knownOrderIdsRef.current = availableIds;
+      setOrders(nextOrders);
       setSelectedIds((current) => current.filter((id) => availableIds.has(id)));
+      if (hasNewOrder
+        && window.matchMedia("(max-width: 1279px)").matches
+        && mobileTabRef.current !== "new") {
+        mobileTabRef.current = "new";
+        setMobileTab("new");
+        setNewOrderSignal((current) => current + 1);
+        requestAnimationFrame(() => {
+          document.getElementById("order-tab-new")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        });
+      }
       setError("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể tải đơn");
@@ -138,6 +168,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const mobileOrders = orders.filter((order) => order.status === mobileTab);
   const mobileAllSelected = mobileOrders.length > 0 && mobileOrders.every((order) => selectedIds.includes(order.id));
 
+  function selectMobileTab(status: OrderStatus) {
+    mobileTabRef.current = status;
+    setMobileTab(status);
+  }
+
   return <main className="min-h-screen bg-[#fff7eb] text-[#2e201c]">
     <header className="border-b bg-white">
       <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 py-4">
@@ -160,7 +195,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         {columns.map((column) => {
           const Icon = column.icon;
           const count = orders.filter((order) => order.status === column.id).length;
-          return <button key={column.id} id={`order-tab-${column.id}`} type="button" role="tab" tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => setMobileTab(column.id)} onKeyDown={(event) => {
+          return <button key={`${column.id}-${column.id === "new" ? newOrderSignal : 0}`} id={`order-tab-${column.id}`} type="button" role="tab" tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => selectMobileTab(column.id)} onKeyDown={(event) => {
             const index = columns.findIndex((entry) => entry.id === column.id);
             const nextIndex = event.key === "ArrowRight" ? (index + 1) % columns.length
               : event.key === "ArrowLeft" ? (index + columns.length - 1) % columns.length
@@ -169,9 +204,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             if (nextIndex < 0) return;
             event.preventDefault();
             const next = columns[nextIndex].id;
-            setMobileTab(next);
+            selectMobileTab(next);
             document.getElementById(`order-tab-${next}`)?.focus();
-          }} className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-bold ${mobileTab === column.id ? "border-[#a82d1e] bg-[#a82d1e] text-white" : "border-[#e9d7c5] bg-white text-[#2e201c]"}`}>
+          }} className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-bold ${column.id === "new" && newOrderSignal > 0 ? "animate-new-order" : ""} ${mobileTab === column.id ? "border-[#a82d1e] bg-[#a82d1e] text-white" : "border-[#e9d7c5] bg-white text-[#2e201c]"}`}>
             <Icon className="size-4" aria-hidden="true" />{column.title}<span className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs ${mobileTab === column.id ? "bg-white/20" : "bg-[#fff0df]"}`}>{count}</span>
           </button>;
         })}
@@ -217,10 +252,13 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
                 <article key={order.id} className="rounded-2xl bg-white p-4 shadow-sm">
                   <div className="flex justify-between gap-2">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs font-bold text-[#9e281c]">{order.code} · {order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</p>
                       <h3 className="text-lg font-black">{order.tableCode ? `Bàn ${order.tableCode}` : "Mang về"}</h3>
-                      <p className="mt-1 text-sm text-zinc-600">Khách: <span className="font-semibold text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <p className="min-w-0 truncate text-sm text-zinc-600">Khách: <span className="font-semibold text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
+                        {column.next && <Button size="sm" className="shrink-0 bg-[#a82d1e]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Đang cập nhật...</> : column.action}</Button>}
+                      </div>
                     </div>
                     <div className="flex items-start gap-2">
                       <time dateTime={order.createdAt} title="Giờ Việt Nam" className="shrink-0 whitespace-pre-line text-right text-xs leading-5 text-zinc-500">{formatOrderTime(order.createdAt)}</time>
@@ -234,7 +272,6 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                   <div className="flex items-center justify-between gap-2">
                     <b>{formatMoney(order.total)}</b>
                     <div className="flex items-center gap-1">
-                      {column.next && <Button size="sm" className="bg-[#a82d1e]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> Đang cập nhật...</> : column.action}</Button>}
                       {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} className="text-[#a82d1e] hover:bg-[#fff0df]" onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
                       <Button variant="ghost" size="icon-sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
                     </div>
@@ -275,7 +312,6 @@ type EditLine = {
   name: string;
   price: number;
   quantity: number;
-  notes: string;
 };
 
 function EditOrderDialog({
@@ -287,12 +323,15 @@ function EditOrderDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const initialNote = parseOrderNote(order.note);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const [tableCode, setTableCode] = useState(order.tableCode ?? "");
   const [customerName, setCustomerName] = useState(order.customerName);
-  const [note, setNote] = useState(order.note);
+  const [notes, setNotes] = useState<string[]>(initialNote.notes);
+  const [otherNote, setOtherNote] = useState(initialNote.otherNote);
   const [lines, setLines] = useState<EditLine[]>(() => order.items.map((item) => ({
     key: `existing-${item.id}`, existingId: item.id, menuItemId: item.menuItemId,
-    name: item.itemName, price: item.price, quantity: item.quantity, notes: item.notes,
+    name: item.itemName, price: item.price, quantity: item.quantity,
   })));
   const [selectedMenuId, setSelectedMenuId] = useState("");
   const [saving, setSaving] = useState(false);
@@ -315,7 +354,7 @@ function EditOrderDialog({
         ? { ...line, quantity: Math.min(20, line.quantity + 1) } : line);
       return [...current, {
         key: `new-${item.id}`, menuItemId: item.id, name: item.name,
-        price: item.price, quantity: 1, notes: "",
+        price: item.price, quantity: 1,
       }];
     });
     setSelectedMenuId("");
@@ -332,7 +371,7 @@ function EditOrderDialog({
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          tableCode, customerName, note,
+          tableCode, customerName, note: composeOrderNote(notes, otherNote),
           items: lines.map((line) => line.existingId
             ? { id: line.existingId, quantity: line.quantity }
             : { menuItemId: line.menuItemId, quantity: line.quantity }),
@@ -349,9 +388,9 @@ function EditOrderDialog({
     }
   }
 
-  return <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-xl">
+  return <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
     <DialogHeader>
-      <DialogTitle>Sửa đơn {order.code}</DialogTitle>
+      <DialogTitle ref={titleRef} tabIndex={-1} className="outline-none">Sửa đơn {order.code}</DialogTitle>
       <DialogDescription>Chỉnh sửa món và thông tin trước khi đơn hoàn thành.</DialogDescription>
     </DialogHeader>
     <form onSubmit={(event) => void save(event)} className="space-y-4">
@@ -370,7 +409,6 @@ function EditOrderDialog({
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{line.name}</p>
               <p className="text-xs text-zinc-500">{formatMoney(line.price)} / món</p>
-              {line.notes && <p className="text-xs text-zinc-500">Ghi chú món: {line.notes}</p>}
             </div>
             <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity <= 1} onClick={() => changeQuantity(line.key, -1)} aria-label={`Giảm ${line.name}`}>−</Button>
             <span className="w-5 text-center text-sm font-bold">{line.quantity}</span>
@@ -387,9 +425,7 @@ function EditOrderDialog({
         </select>
         <Button type="button" variant="outline" disabled={!selectedMenuId || saving} onClick={addItem}><Plus className="size-4" /> Thêm</Button>
       </div>
-      <label className="block space-y-1 text-sm font-semibold">Ghi chú đơn
-        <Textarea value={note} maxLength={500} disabled={saving} onChange={(event) => setNote(event.target.value)} placeholder="Ghi chú cho bếp..." />
-      </label>
+      <OrderNoteFields notes={notes} otherNote={otherNote} disabled={saving} setNotes={setNotes} setOtherNote={setOtherNote} />
       {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       <div className="sticky bottom-0 -mx-6 -mb-6 flex flex-wrap items-center justify-between gap-3 border-t bg-white p-4">
         <div><p className="text-xs text-zinc-500">Tổng cộng</p><p className="text-lg font-black">{formatMoney(total)}</p></div>
@@ -402,9 +438,107 @@ function EditOrderDialog({
   </DialogContent>;
 }
 
+function OrderNoteFields({
+  notes,
+  otherNote,
+  disabled,
+  setNotes,
+  setOtherNote,
+}: {
+  notes: string[];
+  otherNote: string;
+  disabled: boolean;
+  setNotes: Dispatch<SetStateAction<string[]>>;
+  setOtherNote: (value: string) => void;
+}) {
+  return <div className="space-y-3">
+    <fieldset disabled={disabled}>
+      <legend className="mb-2 text-sm font-bold">Ghi chú</legend>
+      <div className="flex flex-wrap gap-2">
+        {quickNotes.map((note) => <label key={note} className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold ${notes.includes(note) ? "border-[#a82d1e] bg-[#fff0df] text-[#89291d]" : "bg-white"}`}>
+          <Checkbox checked={notes.includes(note)} onCheckedChange={(checked) => setNotes((current) => checked ? [...current, note] : current.filter((value) => value !== note))} />
+          {note}
+        </label>)}
+      </div>
+    </fieldset>
+    <label className="block space-y-1 text-sm font-semibold">Ghi chú khác
+      <Textarea value={otherNote} maxLength={440} disabled={disabled} onChange={(event) => setOtherNote(event.target.value)} placeholder="Ghi chú cho bếp..." />
+    </label>
+  </div>;
+}
+
 function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: MenuItem[] }) {
-  const [tableCode, setTableCode] = useState(""); const [cart, setCart] = useState<Record<string, number>>({}); const [notes, setNotes] = useState<string[]>([]); const [otherNote, setOtherNote] = useState(""); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
-  const selected = menu.filter((item) => cart[item.id]); const total = useMemo(() => selected.reduce((sum, item) => sum + item.price * cart[item.id], 0), [selected, cart]);
-  async function create() { setSaving(true); setError(""); try { const response = await fetch("/api/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ source: "staff_pos", tableCode, orderType: tableCode ? "dine_in" : "takeaway", note: [...notes, otherNote].filter(Boolean).join(", "), items: selected.map((item) => ({ id: item.id, quantity: cart[item.id], notes })) }) }); const result = await response.json(); if (!response.ok) throw new Error(result.error); onCreated(); } catch (err) { setError(err instanceof Error ? err.message : "Không thể tạo đơn"); } finally { setSaving(false); } }
-  return <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto"><DialogHeader><DialogTitle className="text-2xl">Tạo đơn tại quầy</DialogTitle></DialogHeader><Input value={tableCode} onChange={(e) => setTableCode(e.target.value)} placeholder="Số bàn — để trống nếu mang về"/><div className="grid gap-2 sm:grid-cols-2">{menu.map((item) => <div key={item.id} className="flex items-center gap-2 rounded-xl border p-3"><div className="min-w-0 flex-1"><p className="truncate font-bold">{item.name}</p><p className="text-sm text-[#9e281c]">{formatMoney(item.price)}</p></div><Button variant="outline" size="icon-sm" onClick={() => setCart((c) => ({ ...c, [item.id]: Math.max(0, (c[item.id] ?? 0) - 1) }))}>−</Button><b className="w-5 text-center">{cart[item.id] ?? 0}</b><Button variant="outline" size="icon-sm" onClick={() => setCart((c) => ({ ...c, [item.id]: (c[item.id] ?? 0) + 1 }))}>+</Button></div>)}</div><div><p className="mb-2 text-sm font-bold">Ghi chú</p><div className="flex flex-wrap gap-2">{quickNotes.map((note) => <label key={note} className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold"><Checkbox checked={notes.includes(note)} onCheckedChange={(checked) => setNotes((current) => checked ? [...current, note] : current.filter((value) => value !== note))}/>{note}</label>)}</div></div><Textarea value={otherNote} onChange={(e) => setOtherNote(e.target.value)} placeholder="Ghi chú khác..." />{error && <p className="text-sm text-red-600">{error}</p>}<div className="flex items-center justify-between border-t pt-4"><div><p className="text-xs text-zinc-500">Tổng cộng</p><p className="text-2xl font-black">{formatMoney(total)}</p></div><Button className="bg-[#bd3b22]" disabled={!selected.length || saving} onClick={create}>{saving ? "Đang tạo..." : "Tạo đơn"}</Button></div></DialogContent>;
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [tableCode, setTableCode] = useState("");
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [notes, setNotes] = useState<string[]>([]);
+  const [otherNote, setOtherNote] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const selected = menu.filter((item) => cart[item.id]);
+  const total = useMemo(() => selected.reduce((sum, item) => sum + item.price * cart[item.id], 0), [selected, cart]);
+
+  function reset() {
+    setTableCode("");
+    setCart({});
+    setNotes([]);
+    setOtherNote("");
+    setError("");
+  }
+
+  async function create() {
+    if (saving || !selected.length) return;
+    const normalizedTableCode = tableCode.trim();
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          source: "staff_pos",
+          tableCode: normalizedTableCode,
+          orderType: normalizedTableCode ? "dine_in" : "takeaway",
+          note: composeOrderNote(notes, otherNote),
+          items: selected.map((item) => ({ id: item.id, quantity: cart[item.id], notes })),
+        }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Không thể tạo đơn");
+      reset();
+      onCreated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể tạo đơn");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
+    <DialogHeader>
+      <DialogTitle ref={titleRef} tabIndex={-1} className="text-2xl outline-none">Tạo đơn tại quầy</DialogTitle>
+      <DialogDescription>Chọn món và thêm thông tin bàn nếu cần.</DialogDescription>
+    </DialogHeader>
+    <Input value={tableCode} maxLength={20} disabled={saving} onChange={(event) => setTableCode(event.target.value)} placeholder="Số bàn — để trống nếu mang về" />
+    <div className="grid gap-2 sm:grid-cols-2">
+      {menu.map((item) => {
+        const quantity = cart[item.id] ?? 0;
+        return <div key={item.id} className="flex items-center gap-2 rounded-xl border p-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-bold">{item.name}</p>
+            <p className="text-sm text-[#9e281c]">{formatMoney(item.price)}</p>
+          </div>
+          <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity <= 0} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} aria-label={`Giảm ${item.name}`}>−</Button>
+          <b className="w-5 text-center">{quantity}</b>
+          <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity >= 20} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.min(20, (current[item.id] ?? 0) + 1) }))} aria-label={`Thêm ${item.name}`}>+</Button>
+        </div>;
+      })}
+    </div>
+    <OrderNoteFields notes={notes} otherNote={otherNote} disabled={saving} setNotes={setNotes} setOtherNote={setOtherNote} />
+    {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+    <div className="sticky bottom-0 -mx-6 -mb-6 flex items-center justify-between gap-3 border-t bg-white p-4">
+      <div><p className="text-xs text-zinc-500">Tổng cộng</p><p className="text-2xl font-black">{formatMoney(total)}</p></div>
+      <Button className="bg-[#bd3b22] hover:bg-[#9e281c]" disabled={!selected.length || saving} onClick={() => void create()}>{saving ? "Đang tạo..." : "Tạo đơn"}</Button>
+    </div>
+  </DialogContent>;
 }
