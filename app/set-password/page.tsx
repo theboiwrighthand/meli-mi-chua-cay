@@ -8,19 +8,47 @@ export default function SetPasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const supabase = createClient();
     let active = true;
+    // Keep the fragment before the auth client initializes: Supabase invite and
+    // recovery links can return tokens in the URL fragment.
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const code = new URLSearchParams(window.location.search).get("code");
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active && session?.user.email) {
+        setEmail(session.user.email);
+        setMessage("");
+        setChecking(false);
+      }
+    });
+
     async function loadUser() {
+      const accessToken = fragment.get("access_token");
+      const refreshToken = fragment.get("refresh_token");
+      if (accessToken && refreshToken) {
+        await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        window.history.replaceState(null, "", window.location.pathname);
+      } else if (code) {
+        await supabase.auth.exchangeCodeForSession(code);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!active) return;
-      if (user?.email) setEmail(user.email);
-      else setMessage("Liên kết mời không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu lời mời mới.");
+      if (user?.email) {
+        setEmail(user.email);
+        setMessage("");
+      } else {
+        setMessage("Không xác nhận được phiên đăng nhập. Hãy mở liên kết đặt lại mật khẩu mới từ email.");
+      }
+      setChecking(false);
     }
     void loadUser();
-    return () => { active = false; };
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -42,7 +70,7 @@ export default function SetPasswordPage() {
     <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-xl">
       <p className="text-sm font-bold uppercase tracking-widest text-[#d6552d]">MELI</p>
       <h1 className="mt-2 text-3xl font-black text-zinc-900">Đặt mật khẩu quản lý</h1>
-      {email ? <p className="mt-3 text-sm text-zinc-600">{email}</p> : <p className="mt-3 text-sm text-zinc-600">Đang xác nhận lời mời…</p>}
+      {email ? <p className="mt-3 text-sm text-zinc-600">{email}</p> : checking ? <p className="mt-3 text-sm text-zinc-600">Đang xác nhận liên kết…</p> : null}
       {email && <>
         <label className="mt-6 block text-sm font-bold">Mật khẩu mới
           <input required minLength={8} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3" />
