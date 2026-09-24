@@ -25,7 +25,7 @@ const groups: Array<{ id: MenuItem["category"]; title: string }> = [
   { id: "drinks", title: "Đồ uống" },
 ];
 
-const quickNotes = ["Ít cay", "Không hành", "Không giá"];
+const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
 const maxQuantity = 20;
 
 const itemPhotos: Record<MenuItem["category"], string[]> = {

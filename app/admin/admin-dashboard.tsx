@@ -14,10 +14,10 @@ type OrderItem = { id: number; menuItemId: string | null; itemName: string; pric
 type Order = { id: string; code: string; tableCode: string | null; orderType: string; source: string; status: string; customerName: string; note: string; total: number; paymentStatus: string; createdAt: string; items: OrderItem[] };
 const columns = [
   { id: "new", statuses: ["new"], title: "Đơn mới", icon: Clock3, actionIcon: ChefHat, action: "Đã làm", next: "cooking" },
-  { id: "cooking", statuses: ["cooking", "served"], title: "Đã làm", icon: ChefHat, actionIcon: CircleDollarSign, action: "Đã thanh toán", next: "paid" },
+  { id: "cooking", statuses: ["cooking", "served"], title: "Đã làm", icon: ChefHat, actionIcon: CircleDollarSign, action: "Thanh toán", next: "paid" },
   { id: "paid", statuses: ["paid"], title: "Đã thanh toán", icon: CircleDollarSign, actionIcon: CircleDollarSign, action: "", next: "" },
 ] as const;
-const quickNotes = ["Ít cay", "Không hành", "Không giá"];
+const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
 type OrderStatus = (typeof columns)[number]["id"];
 
 function parseOrderNote(note: string) {
@@ -263,7 +263,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                           <h3 className="mt-1.5 min-w-0 break-words text-lg font-black leading-tight">{order.orderType === "takeaway" ? "Mang về" : order.tableCode ? `Bàn ${order.tableCode}` : "Dùng tại chỗ"}</h3>
                         </div>
                       </div>
-                      {column.next && <Button size="sm" className="h-9 shrink-0 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.action}</>}</Button>}
+                      {column.next && <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        {column.id === "cooking" && <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"><span className="size-1.5 rounded-full bg-amber-500" aria-hidden="true" />Chưa thanh toán</span>}
+                        <Button size="sm" className="h-9 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.action}</>}</Button>
+                      </div>}
                     </div>
                     <div className="mt-3 border-y py-1">{order.items.map((item) =>
                       <div key={item.id} className="flex min-w-0 items-center justify-between gap-2 py-2.5 text-sm">
