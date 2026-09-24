@@ -50,3 +50,22 @@ export async function POST(request: Request) {
     return Response.json({ error: "Không thể tạo đơn. Vui lòng thử lại." }, { status: 500 });
   }
 }
+
+const orderIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export async function DELETE(request: Request) {
+  if (!(await isAdminRequest())) return Response.json({ error: "Không có quyền truy cập" }, { status: 401 });
+  const payload = await request.json().catch(() => null) as { ids?: unknown; confirm?: unknown } | null;
+  if (payload?.confirm !== true) return Response.json({ error: "Cần xác nhận trước khi xóa đơn" }, { status: 400 });
+  if (!Array.isArray(payload.ids) || payload.ids.length < 1 || payload.ids.length > 100 || !payload.ids.every((id) => typeof id === "string" && orderIdPattern.test(id))) {
+    return Response.json({ error: "Danh sách mã đơn không hợp lệ" }, { status: 400 });
+  }
+  const ids = [...new Set(payload.ids as string[])];
+  try {
+    const deleted = await getDb().delete(orders).where(inArray(orders.id, ids)).returning({ id: orders.id });
+    return Response.json({ deletedIds: deleted.map((row) => row.id) });
+  } catch (error) {
+    console.error("DELETE /api/orders", error);
+    return Response.json({ error: "Không thể xóa đơn hàng" }, { status: 500 });
+  }
+}
