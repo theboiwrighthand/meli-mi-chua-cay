@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ChefHat, CircleDollarSign, Clock3, Plus, RefreshCw, Store, Trash2, UtensilsCrossed, XCircle } from "lucide-react";
+import { ChefHat, CircleDollarSign, Clock3, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -17,7 +17,6 @@ const columns = [
   { id: "cooking", title: "Đang làm", icon: ChefHat, action: "Đã phục vụ", next: "served" },
   { id: "served", title: "Đã phục vụ", icon: UtensilsCrossed, action: "Đã thanh toán", next: "paid" },
   { id: "paid", title: "Hoàn thành", icon: CircleDollarSign, action: "", next: "" },
-  { id: "cancelled", title: "Đã hủy", icon: XCircle, action: "", next: "" },
 ] as const;
 const quickNotes = ["Ít cay", "Không hành", "Không giá"];
 
@@ -134,7 +133,7 @@ export function AdminDashboard({ ownerName }: { ownerName: string }) {
           </Button>
         </div>
       </div>
-      <div className="grid gap-4 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="grid gap-4 xl:grid-cols-4">
         {columns.map((column) => {
           const Icon = column.icon;
           const list = orders.filter((order) => order.status === column.id);
