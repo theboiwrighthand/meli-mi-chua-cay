@@ -288,7 +288,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
 
       <Dialog open={cartOpen} onOpenChange={setCartOpen}>
         <DialogContent
-          className="meli-mobile-sheet flex max-h-[92dvh] min-w-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-2xl border-brand-green/10 bg-[#fffaf2] p-0 text-brand-ink lg:hidden"
+          className="meli-mobile-sheet flex max-h-[92dvh] min-w-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-2xl border-brand-green/10 bg-[#fffaf2] p-0 text-brand-ink max-lg:translate-x-0 max-lg:translate-y-0 lg:hidden"
           overlayClassName="lg:hidden"
         >
           <DialogHeader className="shrink-0 border-b border-brand-green/10 px-4 pb-3 pt-5 pr-16 text-left sm:px-5">

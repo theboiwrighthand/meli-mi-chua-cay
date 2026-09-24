@@ -814,7 +814,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
     }
   }
 
-  return <DialogContent className="meli-admin-create-sheet max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
+  return <DialogContent className="meli-admin-create-sheet max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto max-sm:translate-x-0 max-sm:translate-y-0 sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
     <DialogHeader>
       <DialogTitle ref={titleRef} tabIndex={-1} className="text-2xl outline-none">Tạo đơn tại quầy</DialogTitle>
       <DialogDescription>Chọn món và hình thức dùng món.</DialogDescription>
