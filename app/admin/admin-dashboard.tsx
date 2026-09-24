@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -747,7 +747,7 @@ function OrderNoteFields({
 }) {
   return <div className="space-y-3">
     <fieldset disabled={disabled}>
-      <legend className="mb-2 text-sm font-bold">Ghi chú</legend>
+      <legend className="mb-2 text-sm font-bold">Yêu cầu chung</legend>
       <div className="flex flex-wrap gap-2">
         {quickNotes.map((note) => <label key={note} className={`flex min-h-10 cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold ${notes.includes(note) ? "border-[#a82d1e] bg-[#fff0df] text-[#89291d]" : "bg-white"}`}>
           <Checkbox checked={notes.includes(note)} onCheckedChange={(checked) => setNotes((current) => checked ? [...current, note] : current.filter((value) => value !== note))} />
@@ -768,11 +768,16 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
   const [cart, setCart] = useState<Record<string, number>>({});
   const [itemNotes, setItemNotes] = useState<Record<string, string[]>>({});
   const [itemOtherNotes, setItemOtherNotes] = useState<Record<string, string>>({});
+  const [menuSearch, setMenuSearch] = useState("");
+  const [menuCategory, setMenuCategory] = useState<"all" | MenuItem["category"]>("all");
   const [notes, setNotes] = useState<string[]>([]);
   const [otherNote, setOtherNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const selected = menu.filter((item) => cart[item.id]);
+  const itemCount = selected.reduce((sum, item) => sum + cart[item.id], 0);
+  const filteredMenu = menu.filter((item) => (menuCategory === "all" || item.category === menuCategory)
+    && item.name.toLocaleLowerCase("vi").includes(menuSearch.trim().toLocaleLowerCase("vi")));
   const total = useMemo(() => selected.reduce((sum, item) => sum + item.price * cart[item.id], 0), [selected, cart]);
 
   function reset() {
@@ -781,6 +786,8 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
     setCart({});
     setItemNotes({});
     setItemOtherNotes({});
+    setMenuSearch("");
+    setMenuCategory("all");
     setNotes([]);
     setOtherNote("");
     setError("");
@@ -814,30 +821,40 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
     }
   }
 
-  return <DialogContent className="meli-admin-create-sheet max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto max-sm:translate-x-0 max-sm:translate-y-0 sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
-    <DialogHeader>
-      <DialogTitle ref={titleRef} tabIndex={-1} className="text-2xl outline-none">Tạo đơn tại quầy</DialogTitle>
-      <DialogDescription>Chọn món và hình thức dùng món.</DialogDescription>
+  return <DialogContent className="meli-admin-create-sheet flex max-h-[92dvh] min-h-0 w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden bg-[#fffaf3] p-0 max-sm:translate-x-0 max-sm:translate-y-0 sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
+    <DialogHeader className="shrink-0 border-b border-[#eed9c8] bg-white px-4 py-4 pr-14 text-left sm:px-6">
+      <DialogTitle ref={titleRef} tabIndex={-1} className="text-xl font-black text-[#321e18] outline-none sm:text-2xl">Tạo đơn tại quầy</DialogTitle>
+      <DialogDescription className="text-sm">{itemCount ? `${itemCount} món đã chọn` : "Chọn món cho khách"}</DialogDescription>
     </DialogHeader>
-    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-      <Input value={tableCode} maxLength={20} disabled={saving || isTakeaway} onChange={(event) => setTableCode(event.target.value)} placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Số bàn (có thể để trống)"} />
-      <label className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-semibold">
-        <Checkbox checked={isTakeaway} disabled={saving} onCheckedChange={(checked) => { const next = checked === true; setIsTakeaway(next); if (next) setTableCode(""); }} />
-        Mang về
-      </label>
-    </div>
-    <div className="grid gap-2 sm:grid-cols-2">
-      {menu.map((item) => {
+    <div className="min-h-0 min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+      <section aria-label="Thông tin đơn" className="grid gap-3 rounded-xl border border-[#edddce] bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <label className="block text-sm font-semibold text-[#47372f]">Số bàn
+          <Input className="mt-1.5 h-11 bg-white" value={tableCode} maxLength={20} disabled={saving || isTakeaway} onChange={(event) => setTableCode(event.target.value)} placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Có thể để trống"} />
+        </label>
+        <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[#e8d6c7] px-3 text-sm font-semibold">
+          <Checkbox checked={isTakeaway} disabled={saving} onCheckedChange={(checked) => { const next = checked === true; setIsTakeaway(next); if (next) setTableCode(""); }} />
+          <Truck aria-hidden="true" className="size-5 text-[#13978b]" />Mang về
+        </label>
+      </section>
+      <section aria-label="Chọn món" className="space-y-3">
+        <div className="flex items-center justify-between gap-2"><h3 className="text-base font-black">Chọn món</h3><span className="text-sm text-zinc-500">{filteredMenu.length} món</span></div>
+        <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" /><Input className="h-11 bg-white pl-9" value={menuSearch} disabled={saving} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Tìm tên món..." aria-label="Tìm món" /></div>
+        <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Lọc danh mục">
+          {([{ id: "all", label: "Tất cả" }, { id: "mains", label: "Mì chua cay" }, { id: "extras", label: "Ăn kèm" }, { id: "drinks", label: "Đồ uống" }] as const).map((category) =>
+            <button type="button" key={category.id} onClick={() => setMenuCategory(category.id)} aria-pressed={menuCategory === category.id} className={`min-h-10 shrink-0 rounded-lg border px-3 text-sm font-semibold ${menuCategory === category.id ? "border-[#a82d1e] bg-[#a82d1e] text-white" : "border-[#e8d6c7] bg-white text-[#51392e]"}`}>{category.label}</button>)}
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+      {filteredMenu.map((item) => {
         const quantity = cart[item.id] ?? 0;
-        return <div key={item.id} className="rounded-xl border p-3">
+        return <div key={item.id} className={`min-w-0 rounded-xl border p-3 ${quantity ? "border-[#db9e81] bg-white" : "border-[#edddce] bg-white"}`}>
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{item.name}</p>
               <p className="text-sm text-[#9e281c]">{formatMoney(item.price)}</p>
             </div>
-            <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity <= 0} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} aria-label={`Giảm ${item.name}`}>−</Button>
+            <Button type="button" variant="outline" size="icon-sm" className="size-10 shrink-0 sm:size-9" disabled={saving || quantity <= 0} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} aria-label={`Giảm ${item.name}`}>−</Button>
             <b className="w-5 text-center">{quantity}</b>
-            <Button type="button" variant="outline" size="icon-sm" disabled={saving || quantity >= 20} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.min(20, (current[item.id] ?? 0) + 1) }))} aria-label={`Thêm ${item.name}`}>+</Button>
+            <Button type="button" variant="outline" size="icon-sm" className="size-10 shrink-0 border-[#a82d1e] text-[#a82d1e] sm:size-9" disabled={saving || quantity >= 20} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.min(20, (current[item.id] ?? 0) + 1) }))} aria-label={`Thêm ${item.name}`}>+</Button>
           </div>
           {quantity > 0 && <details className="mt-2 text-sm">
             <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{(itemNotes[item.id]?.length || itemOtherNotes[item.id]) ? " · Đã chọn" : ""}</summary>
@@ -850,12 +867,15 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
           </details>}
         </div>;
       })}
+        </div>
+        {!filteredMenu.length && <p className="rounded-xl border border-dashed bg-white p-5 text-center text-sm text-zinc-600">Không tìm thấy món phù hợp.</p>}
+      </section>
+      <section className="rounded-xl border border-[#edddce] bg-white p-3"><OrderNoteFields notes={notes} otherNote={otherNote} disabled={saving} setNotes={setNotes} setOtherNote={setOtherNote} /></section>
+      {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
     </div>
-    <OrderNoteFields notes={notes} otherNote={otherNote} disabled={saving} setNotes={setNotes} setOtherNote={setOtherNote} />
-    {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-    <div className="sticky bottom-0 -mx-6 -mb-6 flex items-center justify-between gap-3 border-t bg-white p-4">
-      <div><p className="text-xs text-zinc-500">Tổng cộng</p><p className="text-2xl font-black">{formatMoney(total)}</p></div>
-      <Button className="bg-[#bd3b22] hover:bg-[#9e281c]" disabled={!selected.length || saving} onClick={() => void create()}>{saving ? "Đang tạo..." : "Tạo đơn"}</Button>
+    <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#eed9c8] bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+      <div className="min-w-0"><p className="text-xs text-zinc-500">{itemCount} món · Tổng cộng</p><p className="text-lg font-black tabular-nums text-[#a82d1e] sm:text-2xl">{formatMoney(total)}</p></div>
+      <Button className="h-11 shrink-0 rounded-lg bg-[#bd3b22] px-5 font-bold hover:bg-[#9e281c]" disabled={!selected.length || saving} onClick={() => void create()}>{saving ? <><LoaderCircle className="size-4 animate-spin" /> Đang tạo...</> : "Tạo đơn"}</Button>
     </div>
   </DialogContent>;
 }
