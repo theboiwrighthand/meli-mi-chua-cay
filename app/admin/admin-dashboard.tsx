@@ -1,7 +1,7 @@
 "use client";
 
 import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { NavigationIconLink } from "@/components/navigation-icon-link";
 import { ArrowLeft, ArrowRight, Check, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -271,7 +271,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     <header className="border-b border-[#e9d7c5] bg-[#fffaf2]">
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <Link href="/" className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm transition-colors hover:bg-[#9e281c]" aria-label="Về menu đặt món"><Store className="size-5" /></Link>
+          <NavigationIconLink href="/" className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm transition-colors hover:bg-[#9e281c]" label="Về menu đặt món"><Store className="size-5" /></NavigationIconLink>
           <div className="min-w-0"><h1 className="truncate text-base font-black sm:text-lg">MELI · Quản lý đơn</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">Xin chào, {ownerName}</p></div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

@@ -253,6 +253,11 @@ body {
 .meli-food-card { min-width: 0; overflow: hidden; border: 1px solid #f1dfca; border-radius: 16px; background: #fffdf8; box-shadow: 0 5px 15px #8e49210e; transition: transform .18s, box-shadow .18s; }
 .meli-food-card:hover { transform: translateY(-2px); box-shadow: 0 12px 22px #8e492125; }
 .meli-food-image { position: relative; height: 150px; overflow: hidden; background: #f5e6d5; }
+.meli-food-placeholder { display: flex; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: radial-gradient(circle at 75% 20%, #fff9e8 0, transparent 45%), #f8e9d4; color: #a3442a; }
+.meli-food-placeholder svg { width: 58px; height: 58px; stroke-width: 1.35; }
+.meli-food-placeholder span { font-size: .78rem; font-weight: 800; letter-spacing: .025em; }
+.meli-food-image-extras .meli-food-placeholder { background: radial-gradient(circle at 75% 20%, #fff5e8 0, transparent 45%), #f7e5d1; color: #a65b2c; }
+.meli-food-image-drinks .meli-food-placeholder { background: radial-gradient(circle at 75% 20%, #f4fff7 0, transparent 45%), #e5f0e8; color: #387566; }
 .meli-food-image img { transition: transform .4s; }
 .meli-food-card:hover .meli-food-image img { transform: scale(1.06); }
 .meli-food-content { display: flex; min-height: 126px; flex-direction: column; padding: .75rem; }

@@ -3,7 +3,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { Check, ChevronRight, Coffee, Flame, LayoutDashboard, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed, Soup, Truck, CookingPot } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { NavigationIconLink } from "@/components/navigation-icon-link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -28,19 +28,26 @@ const groups: Array<{ id: MenuItem["category"]; title: string }> = [
 const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
 const maxQuantity = 20;
 
-const itemPhotos: Record<MenuItem["category"], string[]> = {
-  mains: [
-    "https://images.unsplash.com/photo-1750174539593-130e99ccd113?w=720&q=78",
-    "https://images.unsplash.com/photo-1774979517580-17a5f78cbf1c?w=720&q=78",
-    "https://images.unsplash.com/photo-1786114394199-167f793fbd01?w=720&q=78",
-  ],
-  extras: ["https://images.unsplash.com/photo-1789993496135-e8940474ebf7?w=720&q=78"],
-  drinks: ["https://images.unsplash.com/photo-1767627942883-0a6443183f66?w=720&q=78"],
+// Only attach a photo when it really depicts the product; the rest use a category illustration.
+const itemPhotos: Record<string, string> = {
+  quay: "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Youtiao.jpg/640px-Youtiao.jpg",
 };
 
-function photoFor(item: MenuItem, menu: MenuItem[]) {
-  const siblings = menu.filter((entry) => entry.category === item.category);
-  return itemPhotos[item.category][siblings.findIndex((entry) => entry.id === item.id) % itemPhotos[item.category].length];
+function MenuItemPicture({ item }: { item: MenuItem }) {
+  const [failed, setFailed] = useState(false);
+  const src = itemPhotos[item.id];
+  return (
+    <div className={`meli-food-image meli-food-image-${item.category}`}>
+      {src && !failed ? (
+        <Image src={src} alt={`Ảnh minh họa ${item.name}`} fill sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <div className="meli-food-placeholder" role="img" aria-label={`Hình đại diện nhóm ${item.category === "mains" ? "mì chua cay" : item.category === "extras" ? "ăn kèm" : "đồ uống"}`}>
+          {item.category === "mains" ? <Soup aria-hidden="true" /> : item.category === "extras" ? <CookingPot aria-hidden="true" /> : <Coffee aria-hidden="true" />}
+          <span>{item.category === "mains" ? "Mì chua cay" : item.category === "extras" ? "Ăn kèm" : "Đồ uống"}</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: { initialTableCode?: string; menu: MenuItem[]; isAdmin?: boolean }) {
@@ -199,7 +206,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
           <div className="meli-hero-copy"><span>Hương vị thân quen · Nghĩa Tân</span><h1>Ăn là mê,<br /><em>Mì là Meli.</em></h1><p>Chọn món ngon, quán làm ngay.</p></div>
           <div className="meli-hero-actions">
             {tableCode.trim() && !isTakeaway && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
-            {isAdmin && <Link href="/admin" className="meli-admin-link" aria-label="Mở trang quản lý đơn" title="Quản lý đơn"><LayoutDashboard className="size-5" /></Link>}
+            {isAdmin && <NavigationIconLink href="/admin" className="meli-admin-link" label="Mở trang quản lý đơn"><LayoutDashboard className="size-5" /></NavigationIconLink>}
           </div>
         </div>
       </header>
@@ -235,9 +242,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
 
                       return (
                         <article key={item.id} className="meli-food-card">
-                          <div className="meli-food-image">
-                            <Image src={photoFor(item, menu)} alt={`Ảnh minh họa ${item.name}`} fill sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" />
-                          </div>
+                          <MenuItemPicture item={item} />
                           <div className="meli-food-content">
                             <h3>{item.name}</h3>
                             <p>{item.description || (item.category === "drinks" ? "Giải khát" : "Món ngon tại MELI")}</p>
