@@ -280,7 +280,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             </div>
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
-                <SwipeableOrderCard key={order.id} order={order} busy={updatingIds.includes(order.id) || deleting} onSwipe={handleSwipe}>
+                <SwipeableOrderCard key={order.id} order={order} busy={updatingIds.includes(order.id) || deleting} loading={updatingIds.includes(order.id) || (deleting && deleteTarget?.ids.includes(order.id) === true)} onSwipe={handleSwipe}>
                 <article className="min-w-0 overflow-hidden rounded-xl border border-[#c83220] bg-white shadow-sm">
                   <div className="p-3 sm:p-4">
                     <div className="flex min-w-0 items-start justify-between gap-2">
@@ -361,9 +361,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
 
 type SwipeDirection = "left" | "right";
 
-function SwipeableOrderCard({ order, busy, onSwipe, children }: {
+function SwipeableOrderCard({ order, busy, loading, onSwipe, children }: {
   order: Order;
   busy: boolean;
+  loading: boolean;
   onSwipe: (order: Order, direction: SwipeDirection) => void;
   children: ReactNode;
 }) {
@@ -432,7 +433,24 @@ function SwipeableOrderCard({ order, busy, onSwipe, children }: {
     <div className="relative origin-bottom rounded-xl" style={{
       transform: `translate3d(${offset}px, 0, 0) rotate(${offset / 18}deg)`,
       transition: settling ? "transform 180ms ease-out" : undefined,
-    }}>{children}</div>
+    }}>
+      <div className={loading ? "invisible" : undefined} inert={loading} aria-hidden={loading}>{children}</div>
+      {loading && <div role="status" aria-label="Đang xử lý đơn hàng" className="absolute inset-0 flex flex-col rounded-xl border border-[#c83220] bg-white p-4 shadow-sm">
+        <div className="flex animate-pulse items-start justify-between gap-3">
+          <div className="w-2/3 space-y-3"><div className="h-3 w-28 max-w-full rounded bg-[#eadfd7]" /><div className="h-5 w-3/4 rounded bg-[#eadfd7]" /></div>
+          <div className="h-9 w-20 rounded bg-[#eadfd7]" />
+        </div>
+        <div className="my-4 flex flex-1 animate-pulse flex-col justify-around gap-3 border-y py-3">
+          <div className="h-3 w-4/5 rounded bg-[#f0e8e2]" />
+          <div className="h-3 w-2/3 rounded bg-[#f0e8e2]" />
+          <div className="h-3 w-3/4 rounded bg-[#f0e8e2]" />
+        </div>
+        <div className="flex animate-pulse items-center justify-between gap-3">
+          <div className="h-3 w-2/5 rounded bg-[#eadfd7]" />
+          <div className="h-5 w-1/3 rounded bg-[#eadfd7]" />
+        </div>
+      </div>}
+    </div>
   </div>;
 }
 
