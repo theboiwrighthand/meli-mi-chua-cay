@@ -66,7 +66,7 @@ export default function SetPasswordPage() {
     window.location.assign("/admin");
   }
 
-  return <main className="grid min-h-screen place-items-center bg-[#fff8ea] p-6">
+  return <main className="grid min-h-screen place-items-center bg-[#fff7eb] p-6">
     <form onSubmit={submit} className="w-full max-w-sm rounded-3xl bg-white p-8 shadow-xl">
       <p className="text-sm font-bold uppercase tracking-widest text-[#d6552d]">MELI</p>
       <h1 className="mt-2 text-3xl font-black text-zinc-900">Đặt mật khẩu quản lý</h1>
@@ -78,7 +78,7 @@ export default function SetPasswordPage() {
         <label className="mt-4 block text-sm font-bold">Nhập lại mật khẩu
           <input required minLength={8} type="password" autoComplete="new-password" value={confirm} onChange={(event) => setConfirm(event.target.value)} className="mt-2 w-full rounded-xl border px-4 py-3" />
         </label>
-        <button disabled={loading} className="mt-6 w-full rounded-xl bg-[#07572f] px-4 py-3 font-bold text-white disabled:opacity-60">
+        <button disabled={loading} className="mt-6 w-full rounded-xl bg-[#a82d1e] px-4 py-3 font-bold text-white disabled:opacity-60">
           {loading ? "Đang lưu…" : "Lưu mật khẩu"}
         </button>
       </>}
