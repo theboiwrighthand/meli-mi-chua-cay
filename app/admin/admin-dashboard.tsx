@@ -2,7 +2,7 @@
 
 import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -836,6 +836,18 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
           <Truck aria-hidden="true" className="size-5 text-[#13978b]" />Mang về
         </label>
       </section>
+      {selected.length > 0 && <section aria-label="Đọc lại đơn cho khách" className="rounded-xl border border-[#ddad91] bg-[#fff1e6] p-3">
+        <div className="mb-2 flex items-center gap-2 text-sm font-black text-[#8d281d]"><Check aria-hidden="true" className="size-4" />Đọc lại đơn cho khách <span className="ml-auto font-semibold">{itemCount} món</span></div>
+        <div className="divide-y divide-[#e9cbb8] border-t border-[#e9cbb8]">
+          {selected.map((item) => {
+            const itemNote = [...(itemNotes[item.id] ?? []), itemOtherNotes[item.id]?.trim()].filter(Boolean).join(", ");
+            return <div key={item.id} className="flex min-w-0 items-start justify-between gap-3 py-2 text-sm">
+              <div className="min-w-0"><p className="font-semibold"><span className="text-[#a82d1e]">{cart[item.id]}×</span> {item.name}</p>{itemNote && <p className="mt-0.5 break-words text-xs text-[#795447]">({itemNote})</p>}</div>
+              <span className="shrink-0 font-semibold tabular-nums">{formatMoney(item.price * cart[item.id])}</span>
+            </div>;
+          })}
+        </div>
+      </section>}
       <section aria-label="Chọn món" className="space-y-3">
         <div className="flex items-center justify-between gap-2"><h3 className="text-base font-black">Chọn món</h3><span className="text-sm text-zinc-500">{filteredMenu.length} món</span></div>
         <div className="relative"><Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" /><Input className="h-11 bg-white pl-9" value={menuSearch} disabled={saving} onChange={(event) => setMenuSearch(event.target.value)} placeholder="Tìm tên món..." aria-label="Tìm món" /></div>
@@ -846,11 +858,12 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
         <div className="grid gap-2 sm:grid-cols-2">
       {filteredMenu.map((item) => {
         const quantity = cart[item.id] ?? 0;
-        return <div key={item.id} className={`min-w-0 rounded-xl border p-3 ${quantity ? "border-[#db9e81] bg-white" : "border-[#edddce] bg-white"}`}>
+        return <div key={item.id} data-selected={quantity > 0} className={`min-w-0 rounded-xl border p-3 transition-colors ${quantity ? "border-[#b03a27] bg-[#fff1e6] shadow-[inset_4px_0_0_#a82d1e]" : "border-[#edddce] bg-white"}`}>
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <p className="truncate font-bold">{item.name}</p>
               <p className="text-sm text-[#9e281c]">{formatMoney(item.price)}</p>
+              {quantity > 0 && <p className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-[#a82d1e]"><Check aria-hidden="true" className="size-3.5" /> Đã chọn</p>}
             </div>
             <Button type="button" variant="outline" size="icon-sm" className="size-10 shrink-0 sm:size-9" disabled={saving || quantity <= 0} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.max(0, (current[item.id] ?? 0) - 1) }))} aria-label={`Giảm ${item.name}`}>−</Button>
             <b className="w-5 text-center">{quantity}</b>
