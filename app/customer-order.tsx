@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { Check, ChevronRight, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { Check, ChevronRight, Coffee, Flame, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,6 +26,21 @@ const groups: Array<{ id: MenuItem["category"]; title: string }> = [
 
 const quickNotes = ["Ít cay", "Không hành", "Không giá"];
 const maxQuantity = 20;
+
+const itemPhotos: Record<MenuItem["category"], string[]> = {
+  mains: [
+    "https://images.unsplash.com/photo-1750174539593-130e99ccd113?w=720&q=78",
+    "https://images.unsplash.com/photo-1774979517580-17a5f78cbf1c?w=720&q=78",
+    "https://images.unsplash.com/photo-1786114394199-167f793fbd01?w=720&q=78",
+  ],
+  extras: ["https://images.unsplash.com/photo-1789993496135-e8940474ebf7?w=720&q=78"],
+  drinks: ["https://images.unsplash.com/photo-1767627942883-0a6443183f66?w=720&q=78"],
+};
+
+function photoFor(item: MenuItem) {
+  const siblings = menu.filter((entry) => entry.category === item.category);
+  return itemPhotos[item.category][siblings.findIndex((entry) => entry.id === item.id) % itemPhotos[item.category].length];
+}
 
 export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: string }) {
   const [tableCode, setTableCode] = useState(initialTableCode);
@@ -160,89 +176,61 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
 
   return (
     <main className="min-h-screen bg-brand-cream text-brand-ink">
-      <header className="border-b border-brand-green/10 bg-white">
-        <div className="mx-auto flex h-16 max-w-6xl items-center px-4">
-          <div className="grid size-10 place-items-center rounded-xl bg-brand-green text-lg font-extrabold text-white">M</div>
-          <div className="ml-3">
-            <p className="font-extrabold tracking-[0.12em] text-brand-green">MELI</p>
-            <p className="text-xs text-brand-muted">Mì chua cay · Nghĩa Tân</p>
-          </div>
-          {tableCode.trim() && (
-            <span className="ml-auto rounded-full bg-brand-green-soft px-3 py-1.5 text-sm font-bold text-brand-green">
-              Bàn {tableCode.trim()}
-            </span>
-          )}
+      <header className="meli-hero">
+        <div className="meli-hero-photo" aria-hidden="true">
+          <Image src={itemPhotos.mains[0]} alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" />
+        </div>
+        <div className="meli-hero-inner">
+          <div className="meli-brand"><span aria-hidden="true">🍜</span><div><strong>Meli</strong><small>MÌ CHUA CAY</small></div></div>
+          <div className="meli-hero-copy"><span>Hương vị thân quen · Nghĩa Tân</span><h1>Ăn là mê,<br /><em>Mì là Meli.</em></h1><p>Chọn món ngon, quán làm ngay.</p></div>
+          {tableCode.trim() && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 pb-28 pt-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:pb-12">
+      <div className="meli-layout mx-auto grid max-w-[1320px] gap-6 px-4 pb-28 pt-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:pb-12">
         <section>
-          <div className="max-w-2xl">
-            <p className="text-sm font-bold text-brand-orange">MENU HÔM NAY</p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Bạn muốn ăn gì?</h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-brand-muted sm:text-base">
-              Chọn món và gửi đơn trực tiếp tới bếp. Giá đã bao gồm tại quán.
-            </p>
-          </div>
-
-          <nav className="mt-6 flex gap-2 overflow-x-auto pb-1" aria-label="Danh mục món">
+          <nav className="meli-tabs" aria-label="Danh mục món">
+            <button type="button" onClick={() => scrollToGroup("menu-list")} className="meli-tab meli-tab-active"><Flame size={16} /> Tất cả</button>
             {groups.map((group) => (
-              <button
-                key={group.id}
-                type="button"
-                className="min-h-11 shrink-0 rounded-xl border border-brand-green/15 bg-white px-4 text-sm font-semibold text-brand-green transition-colors hover:border-brand-green hover:bg-brand-green-soft"
-                onClick={() => scrollToGroup(group.id)}
-              >
-                {group.title}
+              <button key={group.id} type="button" className="meli-tab" onClick={() => scrollToGroup(group.id)}>
+                {group.id === "drinks" ? <Coffee size={16} /> : <UtensilsCrossed size={16} />}{group.title}
               </button>
             ))}
           </nav>
+          <p className="meli-menu-note">Thực đơn hôm nay <span>· Ảnh món chỉ mang tính minh họa</span></p>
 
-          <div className="mt-9 space-y-10">
+          <div id="menu-list" className="space-y-10">
             {groups.map((group) => {
               const items = menu.filter((item) => item.category === group.id);
 
               return (
-                <section key={group.id} id={group.id} className="scroll-mt-4">
-                  <div className="mb-4 flex items-baseline justify-between border-b border-brand-green/10 pb-3">
+                <section key={group.id} id={group.id} className="scroll-mt-6">
+                  <div className="meli-section-heading mb-4 flex items-baseline justify-between pb-3">
                     <h2 className="text-xl font-extrabold tracking-tight sm:text-2xl">{group.title}</h2>
                     <span className="text-sm text-brand-muted">{items.length} món</span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="meli-item-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {items.map((item) => {
                       const quantity = cart[item.id]?.quantity ?? 0;
 
                       return (
-                        <article
-                          key={item.id}
-                          className="flex min-h-28 flex-col rounded-2xl border border-brand-green/10 bg-white p-4 transition-colors hover:border-brand-green/30"
-                        >
-                          <div>
-                            <h3 className="font-bold leading-snug">{item.name}</h3>
-                            <p className="mt-1 line-clamp-1 text-sm text-brand-muted">
-                              {item.description || "Mát lạnh, giải khát"}
-                            </p>
+                        <article key={item.id} className="meli-food-card">
+                          <div className="meli-food-image">
+                            <Image src={photoFor(item)} alt={`Ảnh minh họa ${item.name}`} fill sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" />
                           </div>
-                          <div className="mt-auto flex items-end justify-between gap-3 pt-4">
-                            <p className="font-bold text-brand-orange">{formatMoney(item.price)}</p>
-                            {quantity > 0 ? (
-                              <QuantityControl
-                                item={item}
-                                quantity={quantity}
-                                disabled={submitting}
-                                change={change}
-                              />
-                            ) : (
-                              <Button
-                                size="icon"
-                                className="size-11 rounded-xl bg-brand-green hover:bg-brand-green/90"
-                                disabled={submitting}
-                                onClick={() => change(item, 1)}
-                                aria-label={`Thêm ${item.name}`}
-                              >
-                                <Plus className="size-5" />
-                              </Button>
-                            )}
+                          <div className="meli-food-content">
+                            <h3>{item.name}</h3>
+                            <p>{item.description || "Món ngon tại MELI"}</p>
+                            <div className="meli-food-bottom">
+                              <strong>{formatMoney(item.price)}</strong>
+                              {quantity > 0 ? (
+                                <QuantityControl item={item} quantity={quantity} disabled={submitting} change={change} />
+                              ) : (
+                                <Button size="icon" className="meli-add-button" disabled={submitting} onClick={() => change(item, 1)} aria-label={`Thêm ${item.name}`}>
+                                  <Plus className="size-5" />
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </article>
                       );
@@ -254,16 +242,16 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
           </div>
         </section>
 
-        <aside className="hidden h-max rounded-2xl border border-brand-green/10 bg-white lg:sticky lg:top-6 lg:block">
+        <aside className="meli-cart hidden h-max lg:sticky lg:top-6 lg:block">
           <CartForm {...cartProps} showHeader />
         </aside>
       </div>
 
       {itemCount > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-green/10 bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-green/10 bg-[#fff9f0] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:hidden">
           <button
             type="button"
-            className="mx-auto flex h-14 w-full max-w-lg items-center rounded-xl bg-brand-green px-4 text-left text-white"
+            className="mx-auto flex h-14 w-full max-w-lg items-center rounded-xl bg-brand-green px-4 text-left text-white shadow-lg"
             onClick={() => setCartOpen(true)}
           >
             <ShoppingBag className="mr-3 size-5" />
@@ -280,7 +268,7 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
 
       <Dialog open={cartOpen} onOpenChange={setCartOpen}>
         <DialogContent
-          className="bottom-0 top-auto flex max-h-[92dvh] w-full max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-2xl border-brand-green/10 bg-white p-0 text-brand-ink sm:max-w-none lg:hidden"
+          className="bottom-0 top-auto flex max-h-[92dvh] w-full max-w-none translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-2xl border-brand-green/10 bg-[#fffaf2] p-0 text-brand-ink sm:max-w-none lg:hidden"
           overlayClassName="lg:hidden"
         >
           <DialogHeader className="shrink-0 border-b border-brand-green/10 p-5 pr-16 text-left">
@@ -306,7 +294,7 @@ function QuantityControl({
   change: (item: MenuItem, delta: number) => void;
 }) {
   return (
-    <div className="flex items-center rounded-xl border border-brand-green/15 bg-white">
+    <div className="meli-quantity flex items-center rounded-lg border border-brand-green/15 bg-white">
       <button
         type="button"
         className="grid size-11 place-items-center rounded-xl text-brand-green disabled:opacity-50"
