@@ -305,7 +305,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         })}
       </div>
       <div className="mb-3 grid grid-cols-3 divide-x divide-[#ead8c8] rounded-xl border border-[#ead8c8] bg-white p-2 xl:mb-4 xl:gap-3 xl:divide-x-0 xl:border-0 xl:bg-transparent xl:p-0">
-        <Stat label="Đơn đang mở" shortLabel="Đang mở" value={`${activeCount}`} />
+        <Stat label="Đơn chưa thanh toán" shortLabel="Chưa thanh toán" value={`${activeCount}`} />
         <Stat label="Đã thanh toán" shortLabel="Đã thanh toán" value={`${orders.filter((o) => o.status === "paid").length} đơn`} mobileValue={`${orders.filter((o) => o.status === "paid").length}`} />
         <Stat label="Doanh thu ghi nhận" shortLabel="Doanh thu" value={formatMoney(todayRevenue)} />
       </div>
