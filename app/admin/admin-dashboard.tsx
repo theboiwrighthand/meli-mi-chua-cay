@@ -827,17 +827,19 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
       <DialogDescription className="text-sm">{itemCount ? `${itemCount} món đã chọn` : "Chọn món cho khách"}</DialogDescription>
     </DialogHeader>
     <div className="min-h-0 min-w-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
-      <section aria-label="Thông tin đơn" className="grid gap-3 rounded-xl border border-[#edddce] bg-white p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-        <label className="block text-sm font-semibold text-[#47372f]">Số bàn
-          <Input className="mt-1.5 h-11 bg-white" value={tableCode} maxLength={20} disabled={saving || isTakeaway} onChange={(event) => setTableCode(event.target.value)} placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Có thể để trống"} />
-        </label>
-        <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[#e8d6c7] px-3 text-sm font-semibold">
-          <Checkbox checked={isTakeaway} disabled={saving} onCheckedChange={(checked) => { const next = checked === true; setIsTakeaway(next); if (next) setTableCode(""); }} />
-          <Truck aria-hidden="true" className="size-5 text-[#13978b]" />Mang về
-        </label>
+      <section aria-label="Thông tin đơn" className="space-y-3 rounded-xl border border-[#edddce] bg-white p-3 sm:p-4">
+        <h3 className="text-sm font-bold text-[#47372f]">Hình thức dùng món</h3>
+        <div role="group" aria-label="Hình thức dùng món" className="grid grid-cols-2 gap-2">
+          <button type="button" aria-pressed={!isTakeaway} disabled={saving} onClick={() => setIsTakeaway(false)} className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-2 text-sm font-bold transition-colors ${!isTakeaway ? "border-[#a82d1e] bg-[#fff0e7] text-[#8e2b1c] ring-1 ring-[#a82d1e]" : "border-[#e8d6c7] bg-white text-[#69564d] hover:bg-[#fff7f0]"}`}><Store aria-hidden="true" className="size-5 shrink-0" />Ăn tại quán</button>
+          <button type="button" aria-pressed={isTakeaway} disabled={saving} onClick={() => { setIsTakeaway(true); setTableCode(""); }} className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-2 text-sm font-bold transition-colors ${isTakeaway ? "border-[#a82d1e] bg-[#fff0e7] text-[#8e2b1c] ring-1 ring-[#a82d1e]" : "border-[#e8d6c7] bg-white text-[#69564d] hover:bg-[#fff7f0]"}`}><Truck aria-hidden="true" className="size-5 shrink-0" />Mang về</button>
+        </div>
+        {!isTakeaway && <label className="block text-sm font-semibold text-[#47372f]">Số bàn <span className="font-normal text-zinc-500">(tuỳ chọn)</span>
+          <Input className="mt-1.5 h-11 bg-white" value={tableCode} maxLength={20} disabled={saving} onChange={(event) => setTableCode(event.target.value)} placeholder="Ví dụ: 3" />
+        </label>}
       </section>
-      {selected.length > 0 && <section aria-label="Đọc lại đơn cho khách" className="rounded-xl border border-[#ddad91] bg-[#fff1e6] p-3">
-        <div className="mb-2 flex items-center gap-2 text-sm font-black text-[#8d281d]"><Check aria-hidden="true" className="size-4" />Đọc lại đơn cho khách <span className="ml-auto font-semibold">{itemCount} món</span></div>
+      {selected.length > 0 && <section aria-label="Các món đã chọn" className="rounded-xl border border-[#ddad91] bg-[#fff1e6] p-3">
+        <div className="mb-1 flex items-center gap-2 text-sm font-black text-[#8d281d]"><Check aria-hidden="true" className="size-4" />Các món đã chọn <span className="ml-auto font-semibold">{itemCount} món</span></div>
+        <p className="mb-2 text-xs text-[#795447]">{isTakeaway ? "Mang về" : tableCode.trim() ? `Bàn ${tableCode.trim()}` : "Ăn tại quán"}</p>
         <div className="divide-y divide-[#e9cbb8] border-t border-[#e9cbb8]">
           {selected.map((item) => {
             const itemNote = [...(itemNotes[item.id] ?? []), itemOtherNotes[item.id]?.trim()].filter(Boolean).join(", ");
