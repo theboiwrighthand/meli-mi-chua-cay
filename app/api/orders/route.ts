@@ -1,4 +1,4 @@
-import { desc, inArray } from "drizzle-orm";
+import { desc, inArray, sql } from "drizzle-orm";
 import { getDb } from "../../../db";
 import { orderItems, orders } from "../../../db/schema";
 import { isAdminRequest } from "../../../lib/admin";
@@ -54,6 +54,46 @@ export async function POST(request: Request) {
 }
 
 const orderIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export async function PATCH(request: Request) {
+  if (!(await isAdminRequest())) return Response.json({ error: "Không có quyền truy cập" }, { status: 401 });
+  const payload = await request.json().catch(() => null) as { ids?: unknown; status?: unknown; confirmUnpay?: unknown } | null;
+  if (!payload || !Array.isArray(payload.ids) || payload.ids.length < 1 || payload.ids.length > 100
+    || !payload.ids.every((id) => typeof id === "string" && orderIdPattern.test(id))
+    || !["new", "cooking", "paid"].includes(String(payload.status))) {
+    return Response.json({ error: "Danh sách đơn hoặc trạng thái không hợp lệ" }, { status: 400 });
+  }
+
+  const ids = [...new Set(payload.ids as string[])];
+  const target = payload.status as string;
+  try {
+    const result = await getDb().transaction(async (tx) => {
+      const locked = await tx.execute(sql`SELECT id, status FROM public.orders WHERE id IN (${sql.join(ids.map((id) => sql`${id}::uuid`), sql`, `)}) ORDER BY id FOR UPDATE`);
+      if (locked.length !== ids.length) return { error: "Có đơn không còn tồn tại, hãy tải lại danh sách", status: 404 } as const;
+
+      const allowed = locked.every((row) => {
+        const current = String(row.status);
+        return current === "new" && target === "cooking"
+          || (current === "cooking" || current === "served") && (target === "new" || target === "paid")
+          || current === "paid" && target === "cooking" && payload.confirmUnpay === true;
+      });
+      if (!allowed) return { error: "Có đơn đã đổi trạng thái, hãy tải lại danh sách", status: 409 } as const;
+
+      const updated = await tx.update(orders).set({
+        status: target,
+        paymentStatus: target === "paid" ? "paid" : "unpaid",
+        updatedAt: sql`now()`,
+      }).where(inArray(orders.id, ids)).returning({ id: orders.id });
+      return { updatedIds: updated.map((row) => row.id) };
+    });
+    return "error" in result
+      ? Response.json({ error: result.error }, { status: result.status })
+      : Response.json(result);
+  } catch (error) {
+    console.error("PATCH /api/orders", error);
+    return Response.json({ error: "Không thể cập nhật các đơn đã chọn" }, { status: 500 });
+  }
+}
 
 export async function DELETE(request: Request) {
   if (!(await isAdminRequest())) return Response.json({ error: "Không có quyền truy cập" }, { status: 401 });

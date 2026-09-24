@@ -64,6 +64,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [unpayTarget, setUnpayTarget] = useState<Order | null>(null);
   const [unpayLoading, setUnpayLoading] = useState(false);
   const [unpayError, setUnpayError] = useState("");
+  const [bulkUnpayTarget, setBulkUnpayTarget] = useState<string[] | null>(null);
+  const [bulkUnpayError, setBulkUnpayError] = useState("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
   const [editTarget, setEditTarget] = useState<Order | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const updatingIdsRef = useRef(new Set<string>());
@@ -106,6 +109,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         && mobileTabRef.current !== "new") {
         mobileTabRef.current = "new";
         setMobileTab("new");
+        setSelectedIds([]);
         setNewOrderSignal((current) => current + 1);
         requestAnimationFrame(() => {
           document.getElementById("order-tab-new")?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
@@ -161,6 +165,41 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       updatingIdsRef.current.delete(id);
       setUpdatingIds([...updatingIdsRef.current]);
     }
+  }
+
+  async function updateSelectedOrders(ids: string[], status: "new" | "cooking" | "paid", confirmUnpay = false): Promise<boolean> {
+    if (!ids.length || ids.some((id) => updatingIdsRef.current.has(id))) return false;
+    ids.forEach((id) => updatingIdsRef.current.add(id));
+    setUpdatingIds([...updatingIdsRef.current]);
+    setBulkUpdating(true);
+    setError("");
+    try {
+      const response = await fetch("/api/orders", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ids, status, confirmUnpay }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(result?.error || "Không thể cập nhật các đơn đã chọn");
+      await load(true);
+      setSelectedIds((current) => current.filter((id) => !ids.includes(id)));
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Không thể cập nhật các đơn đã chọn");
+      return false;
+    } finally {
+      ids.forEach((id) => updatingIdsRef.current.delete(id));
+      setUpdatingIds([...updatingIdsRef.current]);
+      setBulkUpdating(false);
+    }
+  }
+
+  async function confirmBulkUnpay() {
+    if (!bulkUnpayTarget || bulkUpdating) return;
+    setBulkUnpayError("");
+    const success = await updateSelectedOrders(bulkUnpayTarget, "cooking", true);
+    if (success) setBulkUnpayTarget(null);
+    else setBulkUnpayError("Không thể chuyển các đơn đã chọn. Vui lòng tải lại và thử lại.");
   }
 
   function requestDelete(kind: "single" | "bulk", ids: string[], label: string, confirmTitle?: string) {
@@ -219,8 +258,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const allSelected = visibleOrders.length > 0 && visibleOrders.every((order) => selectedIds.includes(order.id));
   const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status));
   const mobileAllSelected = mobileOrders.length > 0 && mobileOrders.every((order) => selectedIds.includes(order.id));
+  const selectedInTab = mobileOrders.filter((order) => selectedIds.includes(order.id)).map((order) => order.id);
+  const selectedBusy = bulkUpdating || deleting || selectedInTab.some((id) => updatingIds.includes(id));
 
   function selectMobileTab(status: OrderStatus) {
+    if (status !== mobileTabRef.current) setSelectedIds([]);
     mobileTabRef.current = status;
     setMobileTab(status);
   }
@@ -246,7 +288,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         {columns.map((column) => {
           const Icon = column.icon;
           const count = orders.filter((order) => column.statuses.some((status) => status === order.status)).length;
-          return <button key={column.id} id={`order-tab-${column.id}`} type="button" role="tab" tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => selectMobileTab(column.id)} onKeyDown={(event) => {
+          return <button key={column.id} id={`order-tab-${column.id}`} type="button" role="tab" disabled={bulkUpdating || deleting} tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => selectMobileTab(column.id)} onKeyDown={(event) => {
             const index = columns.findIndex((entry) => entry.id === column.id);
             const nextIndex = event.key === "ArrowRight" ? (index + 1) % columns.length
               : event.key === "ArrowLeft" ? (index + columns.length - 1) % columns.length
@@ -270,22 +312,31 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       {error && <p className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}
       <div className="mb-4 hidden flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3 xl:flex">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
-          <Checkbox checked={allSelected} disabled={!visibleOrders.length || deleting} onCheckedChange={(checked) => setSelectedIds(checked === true ? visibleOrders.map((order) => order.id) : [])} aria-label="Chọn tất cả đơn" />
+          <Checkbox checked={allSelected} disabled={!visibleOrders.length || deleting || bulkUpdating} onCheckedChange={(checked) => setSelectedIds(checked === true ? visibleOrders.map((order) => order.id) : [])} aria-label="Chọn tất cả đơn" />
           Chọn tất cả ({visibleOrders.length})
         </label>
         <div className="flex items-center gap-3">
           {selectedIds.length > 0 && <span className="text-sm text-zinc-600">Đã chọn {selectedIds.length} đơn</span>}
-          <Button variant="destructive" size="sm" disabled={!selectedIds.length || deleting} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}>
+          <Button variant="destructive" size="sm" disabled={!selectedIds.length || deleting || bulkUpdating} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}>
             <Trash2 className="size-4" /> Xóa đã chọn
           </Button>
         </div>
       </div>
-      <div className="mb-3 flex min-w-0 items-center justify-between gap-2 px-1 xl:hidden">
-        <label className="flex min-w-0 cursor-pointer items-center gap-2 text-xs font-semibold text-[#594b44]">
-          <Checkbox checked={mobileAllSelected} disabled={!mobileOrders.length || deleting} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...new Set([...current, ...mobileOrders.map((order) => order.id)])] : current.filter((id) => !mobileOrders.some((order) => order.id === id)))} aria-label={`Chọn tất cả đơn ${columns.find((column) => column.id === mobileTab)?.title}`} />
+      <div className="mb-3 min-w-0 px-1 xl:hidden">
+        <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-[#594b44]">
+          <Checkbox checked={mobileAllSelected} disabled={!mobileOrders.length || deleting || bulkUpdating} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? mobileOrders.map((order) => order.id) : current.filter((id) => !mobileOrders.some((order) => order.id === id)))} aria-label={`Chọn tất cả đơn ${columns.find((column) => column.id === mobileTab)?.title}`} />
           <span>Chọn tất cả <span className="text-zinc-500">({mobileOrders.length})</span></span>
+          {selectedInTab.length > 0 && <span className="ml-auto rounded-full bg-[#fff0df] px-2 py-0.5 text-[11px] text-[#a82d1e]">Đã chọn {selectedInTab.length}</span>}
         </label>
-        {selectedIds.length > 0 && <Button variant="destructive" size="sm" className="h-8 shrink-0 rounded-lg px-2.5 text-xs" disabled={deleting} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}><Trash2 className="size-3.5" /> Xóa {selectedIds.length} đơn</Button>}
+        {selectedInTab.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">
+          {mobileTab === "new" && <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "cooking")}><ArrowRight className="size-3.5" /> Đã làm</Button>}
+          {mobileTab === "cooking" && <>
+            <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "new")}><ArrowLeft className="size-3.5" /> Đơn mới</Button>
+            <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "paid")}><ArrowRight className="size-3.5" /> Thanh toán</Button>
+          </>}
+          {mobileTab === "paid" && <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => { setBulkUnpayError(""); setBulkUnpayTarget([...selectedInTab]); }}><ArrowLeft className="size-3.5" /> Chưa thanh toán</Button>}
+          <Button variant="destructive" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => requestDelete("bulk", selectedInTab, `${selectedInTab.length} đơn đã chọn`, mobileTab === "paid" ? "Xóa các đơn đã thanh toán này?" : undefined)}><Trash2 className="size-3.5" /> Xóa {selectedInTab.length} đơn</Button>
+        </div>}
       </div>
       <div className="grid gap-4 xl:grid-cols-3">
         {columns.map((column) => {
@@ -308,7 +359,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                   <div className="p-3 sm:p-4">
                     <div className="flex min-w-0 items-start justify-between gap-2">
                       <div className="flex min-w-0 items-start gap-2.5">
-                        <Checkbox className="mt-0.5 size-5 border-[#b92717] data-[state=checked]:border-[#b92717] data-[state=checked]:bg-[#b92717]" checked={selectedIds.includes(order.id)} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
+                        <Checkbox className="mt-0.5 size-5 border-[#b92717] data-[state=checked]:border-[#b92717] data-[state=checked]:bg-[#b92717]" checked={selectedIds.includes(order.id)} disabled={bulkUpdating || deleting} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
                         <div className="min-w-0">
                           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs">
                             <span className="max-w-full break-all rounded bg-[#fff0ed] px-1.5 py-0.5 font-bold text-[#a82d1e]">{order.code}</span>
@@ -362,6 +413,19 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         <div className="flex justify-end gap-2">
           <Button variant="outline" disabled={unpayLoading} onClick={() => setUnpayTarget(null)}>Không, giữ lại</Button>
           <Button disabled={unpayLoading} onClick={() => void confirmUnpay()}>{unpayLoading ? "Đang chuyển..." : "Đồng ý chuyển"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    <Dialog open={bulkUnpayTarget !== null} onOpenChange={(next) => { if (!next && !bulkUpdating) { setBulkUnpayTarget(null); setBulkUnpayError(""); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Chuyển {bulkUnpayTarget?.length} đơn thành chưa thanh toán?</DialogTitle>
+          <DialogDescription>Các đơn đã chọn sẽ trở lại tab Đã làm và không còn được tính là đã thanh toán.</DialogDescription>
+        </DialogHeader>
+        {bulkUnpayError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{bulkUnpayError}</p>}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" disabled={bulkUpdating} onClick={() => setBulkUnpayTarget(null)}>Không, giữ lại</Button>
+          <Button disabled={bulkUpdating} onClick={() => void confirmBulkUnpay()}>{bulkUpdating ? "Đang chuyển..." : "Đồng ý chuyển"}</Button>
         </div>
       </DialogContent>
     </Dialog>
