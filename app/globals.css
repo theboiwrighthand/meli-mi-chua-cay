@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @utility scrollbar-thin {
   scrollbar-width: thin;
 }
@@ -51,13 +53,13 @@
   --sidebar-accent-foreground: #171717;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #a1a1a1;
-  --brand-green: #07572f;
-  --brand-green-soft: #e4f3e8;
-  --brand-orange: #e85c1c;
-  --brand-peach: #ffcfad;
-  --brand-cream: #fff8ea;
-  --brand-ink: #173124;
-  --brand-muted: #68766e;
+  --brand-green: #0b5d3b;
+  --brand-green-soft: #e8f2ec;
+  --brand-orange: #dc5a25;
+  --brand-peach: #f8d8c5;
+  --brand-cream: #f7f4ec;
+  --brand-ink: #183228;
+  --brand-muted: #68756e;
 }
 
 @theme inline {
@@ -103,45 +105,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Avenir Next", Avenir, "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-be-vietnam-pro), "Segoe UI", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #171717;
-    --card-foreground: #ededed;
-    --popover: #171717;
-    --popover-foreground: #ededed;
-    --primary: #ededed;
-    --primary-foreground: #171717;
-    --secondary: #262626;
-    --secondary-foreground: #ededed;
-    --muted: #262626;
-    --muted-foreground: #a1a1a1;
-    --accent: #262626;
-    --accent-foreground: #ededed;
-    --destructive: #ff6467;
-    --border: #ffffff1a;
-    --input: #ffffff26;
-    --ring: #737373;
-    --chart-1: #8e51ff;
-    --chart-2: #00bc7d;
-    --chart-3: #fe9a00;
-    --chart-4: #ad46ff;
-    --chart-5: #ff2056;
-    --sidebar: #171717;
-    --sidebar-foreground: #ededed;
-    --sidebar-primary: #8e51ff;
-    --sidebar-primary-foreground: #ededed;
-    --sidebar-accent: #262626;
-    --sidebar-accent-foreground: #ededed;
-    --sidebar-border: #ffffff1a;
-    --sidebar-ring: #737373;
-  }
+html {
+  color-scheme: light;
 }
 
 body {

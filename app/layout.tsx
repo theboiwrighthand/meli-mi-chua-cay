@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
+
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam-pro",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "MELI — Mì chua cay",
@@ -17,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className="antialiased">{children}</body>
+      <body className={`${beVietnamPro.variable} antialiased`}>{children}</body>
     </html>
   );
 }
