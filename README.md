@@ -1,17 +1,20 @@
 # MELI — Mì chua cay
 
-Ứng dụng đặt món tại quán và quản lý đơn, chạy bằng Next.js App Router, PostgreSQL/Supabase, Drizzle ORM và Supabase Auth. Giao diện khách hàng và màn hình quản lý được giữ từ phiên bản đầu.
+Ứng dụng đặt món tại quán và quản lý đơn, chạy bằng Next.js App Router, PostgreSQL/Supabase, Drizzle ORM và Supabase Auth.
 
 ## Chạy local
 
-1. Tạo project Supabase và sao chép `.env.example` thành `.env.local`.
-2. Điền `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` và `ADMIN_EMAIL`.
-3. Chạy `pnpm install`, `pnpm db:migrate`, rồi `pnpm dev`.
-4. Trong Supabase Auth, tạo tài khoản có email trùng `ADMIN_EMAIL` để truy cập `/admin`.
+1. Sao chép `.env.example` thành `.env.local`.
+2. Trong Supabase Dashboard, mở **Connect → Transaction pooler** để lấy chuỗi kết nối PostgreSQL. Thay `[YOUR-PASSWORD]` bằng mật khẩu database đã tạo trong Supabase. Lưu ý mã hóa URL các ký tự đặc biệt trong mật khẩu. Đặt chuỗi hoàn chỉnh vào `DATABASE_URL`; không commit mật khẩu vào Git.
+3. Điền `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` và `ADMIN_EMAIL`.
+4. Chạy `pnpm install`, `pnpm db:migrate`, rồi `pnpm dev`.
+5. Tạo tài khoản trong Supabase Auth có email trùng `ADMIN_EMAIL` để truy cập `/admin`.
 
 ## Deploy Vercel + GitHub
 
-Đẩy repository lên GitHub, import repository trong Vercel và khai báo bốn biến môi trường như `.env.example`. Build command là `pnpm build`; Vercel tự nhận diện Next.js. Chạy migration bằng `pnpm db:migrate` từ máy local hoặc CI trước khi đưa phiên bản mới lên production.
+Project Vercel cần đặt **Framework Preset = Next.js** và Root Directory là thư mục gốc repository. Trong Vercel → Project Settings → Environment Variables, đặt bốn biến trong `.env.example` cho Production. `DATABASE_URL` là secret phía server; chỉ dùng URL của **Transaction pooler** cổng 6543 cho Vercel Functions. Hai biến có tiền tố `NEXT_PUBLIC_` được gửi xuống trình duyệt, vì vậy chỉ đặt URL và publishable key vào đó. Sau khi thêm hoặc sửa biến, tạo deployment mới để áp dụng.
+
+Kiểm tra trang khách `/` và trang quản lý `/admin`; tạo một đơn thử và xác nhận nó xuất hiện trong `public.orders` cùng `public.order_items`. Cần có tài khoản Supabase Auth đúng email quản trị trước khi thử nhận và xử lý đơn.
 
 ## Cơ sở dữ liệu
 
