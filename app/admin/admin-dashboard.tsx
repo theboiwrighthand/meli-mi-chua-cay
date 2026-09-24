@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ const columns = [
 ] as const;
 const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
 type OrderStatus = (typeof columns)[number]["id"];
+type CountEffect = { change: number; sequence: number };
 
 function parseOrderNote(note: string) {
   const parts = note.split(",").map((part) => part.trim()).filter(Boolean);
@@ -70,6 +71,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const mobileTabRef = useRef<OrderStatus>("new");
   const [updatingIds, setUpdatingIds] = useState<string[]>([]);
   const [newOrderSignal, setNewOrderSignal] = useState(0);
+  const previousCountsRef = useRef<Record<OrderStatus, number> | null>(null);
+  const effectSequenceRef = useRef(0);
+  const [countEffects, setCountEffects] = useState<Partial<Record<OrderStatus, CountEffect>>>({});
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true);
@@ -79,6 +83,18 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       if (!response.ok) throw new Error(result.error);
       const nextOrders = result.orders as Order[];
       const availableIds = new Set<string>(nextOrders.map((order) => order.id));
+      const nextCounts = Object.fromEntries(columns.map((column) => [
+        column.id, nextOrders.filter((order) => column.statuses.some((status) => status === order.status)).length,
+      ])) as Record<OrderStatus, number>;
+      const previousCounts = previousCountsRef.current;
+      previousCountsRef.current = nextCounts;
+      if (previousCounts) {
+        const changes = columns.flatMap((column) => {
+          const change = nextCounts[column.id] - previousCounts[column.id];
+          return change === 0 ? [] : [[column.id, { change, sequence: ++effectSequenceRef.current }] as const];
+        });
+        if (changes.length) setCountEffects((current) => ({ ...current, ...Object.fromEntries(changes) }));
+      }
       const hasNewOrder = knownOrderIdsRef.current !== null
         && nextOrders.some((order) => order.status === "new" && !knownOrderIdsRef.current?.has(order.id));
 
@@ -108,6 +124,17 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     const timer = setInterval(() => void load(true), 5000);
     return () => { clearTimeout(initial); clearInterval(timer); };
   }, [load]);
+
+  useEffect(() => {
+    const timers = (Object.entries(countEffects) as [OrderStatus, CountEffect][]).map(([status, effect]) =>
+      setTimeout(() => setCountEffects((current) => {
+        if (current[status]?.sequence !== effect.sequence) return current;
+        const next = { ...current };
+        delete next[status];
+        return next;
+      }), 1000));
+    return () => timers.forEach(clearTimeout);
+  }, [countEffects]);
 
   async function updateStatus(id: string, status: string, confirmUnpay = false): Promise<boolean> {
     if (updatingIdsRef.current.has(id)) return false;
@@ -232,7 +259,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             selectMobileTab(next);
             document.getElementById(`order-tab-${next}`)?.focus();
           }} className={`flex min-w-0 items-center justify-between gap-1 rounded-xl border px-2 py-2.5 text-xs font-bold sm:justify-start sm:gap-2 sm:px-3 sm:text-sm ${column.id === "new" && newOrderSignal > 0 ? "animate-new-order" : ""} ${mobileTab === column.id ? "border-[#a82d1e] bg-[#a82d1e] text-white" : "border-[#e9d7c5] bg-white text-[#2e201c]"}`}>
-            <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden="true" /><span className="min-w-0 truncate">{column.title}</span><span className={`min-w-6 shrink-0 rounded-full px-1.5 py-0.5 text-center text-xs ${mobileTab === column.id ? "bg-white/20" : "bg-[#fff0df]"}`}>{count}</span>
+            <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden="true" /><span className="min-w-0 truncate">{column.title}</span><OrderCountBadge count={count} effect={countEffects[column.id]} active={mobileTab === column.id} />
           </button>;
         })}
       </div>
@@ -272,7 +299,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-2xl bg-[#eaede8] p-2 sm:p-3 xl:rounded-3xl ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
-              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black">{list.length}</span>
+              <OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop />
             </div>
             <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-[11px] font-medium text-zinc-600 xl:hidden">
               <span className="inline-flex items-center gap-1"><ArrowRight className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Đã làm" : column.id === "cooking" ? "Thanh toán" : "Xóa đơn"}</span>
@@ -452,6 +479,30 @@ function SwipeableOrderCard({ order, busy, loading, onSwipe, children }: {
       </div>}
     </div>
   </div>;
+}
+
+const confettiVectors = [
+  [-31, -31], [-10, -40], [12, -38], [31, -26],
+  [-35, 5], [35, 4], [-19, 27], [19, 29],
+] as const;
+const confettiColors = ["#fbbf24", "#ef4444", "#22c55e", "#f97316", "#38bdf8", "#facc15", "#fb7185", "#a78bfa"];
+
+function OrderCountBadge({ count, effect, active = false, desktop = false }: {
+  count: number;
+  effect?: CountEffect;
+  active?: boolean;
+  desktop?: boolean;
+}) {
+  return <span className="relative inline-flex shrink-0 items-center justify-center">
+    <span key={effect?.sequence ?? 0} aria-live="polite" aria-atomic="true" className={`relative min-w-6 rounded-full text-center font-black ${desktop ? "bg-white px-2.5 py-1 text-xs" : `px-1.5 py-0.5 text-xs ${active ? "bg-white/20" : "bg-[#fff0df]"}`} ${effect?.change && effect.change > 0 ? "order-count-up" : effect?.change ? "order-count-down" : ""}`}>{count}</span>
+    {effect && <span key={effect.sequence} aria-hidden="true" className="pointer-events-none absolute inset-0">
+      {effect.change > 0 ? confettiVectors.map(([dx, dy], index) =>
+        <i key={index} className="order-count-confetti" style={{
+          "--dx": `${dx}px`, "--dy": `${dy}px`, backgroundColor: confettiColors[index],
+        } as CSSProperties} />
+      ) : <span className="order-count-minus">−{Math.abs(effect.change)}</span>}
+    </span>}
+  </span>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border bg-white px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">{label}</p><p className="mt-0.5 text-lg font-black leading-tight">{value}</p></div>; }
