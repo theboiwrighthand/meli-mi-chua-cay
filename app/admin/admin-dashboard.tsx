@@ -2,7 +2,7 @@
 
 import { type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -274,7 +274,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
               <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black">{list.length}</span>
             </div>
-            <p className="mb-2 px-2 text-[11px] text-zinc-600 xl:hidden">{column.id === "new" ? "Vuốt phải: Đã làm · Vuốt trái: Xóa đơn" : column.id === "cooking" ? "Vuốt phải: Thanh toán · Vuốt trái: Đơn mới" : "Vuốt phải: Xóa đơn · Vuốt trái: Chưa thanh toán"}</p>
+            <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-[11px] font-medium text-zinc-600 xl:hidden">
+              <span className="inline-flex items-center gap-1"><ArrowRight className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Đã làm" : column.id === "cooking" ? "Thanh toán" : "Xóa đơn"}</span>
+              <span className="inline-flex items-center gap-1"><ArrowLeft className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Xóa đơn" : column.id === "cooking" ? "Đơn mới" : "Chưa thanh toán"}</span>
+            </div>
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
                 <SwipeableOrderCard key={order.id} order={order} busy={updatingIds.includes(order.id) || deleting} onSwipe={handleSwipe}>
@@ -420,10 +423,13 @@ function SwipeableOrderCard({ order, busy, onSwipe, children }: {
   const deleteAction = offset < 0 && order.status === "new" || offset > 0 && order.status === "paid";
 
   return <div className="relative min-w-0 touch-pan-y xl:touch-auto" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { if (gesture.current) finish(false); }}>
-    {offset !== 0 && <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex items-center ${offset > 0 ? "justify-start pl-4" : "justify-end pr-4"} rounded-xl text-sm font-bold text-white xl:hidden ${deleteAction ? "bg-red-600" : "bg-[#258067]"}`}>
-      {offset > 0 ? rightLabel : leftLabel}
+    {offset !== 0 && <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex items-center ${offset > 0 ? "justify-start pl-3" : "justify-end pr-3"} rounded-xl text-xs font-bold text-white xl:hidden ${deleteAction ? "bg-red-600" : "bg-[#258067]"}`}>
+      <span className="flex max-w-[88px] flex-col items-center gap-1 text-center leading-tight">
+        {offset > 0 ? <ArrowRight className="size-5" /> : <ArrowLeft className="size-5" />}
+        {offset > 0 ? rightLabel : leftLabel}
+      </span>
     </div>}
-    <div className="relative origin-bottom bg-white" style={{
+    <div className="relative origin-bottom rounded-xl" style={{
       transform: `translate3d(${offset}px, 0, 0) rotate(${offset / 18}deg)`,
       transition: settling ? "transform 180ms ease-out" : undefined,
     }}>{children}</div>
