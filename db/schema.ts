@@ -1,4 +1,6 @@
-import { bigint, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { bigint, index, integer, pgSequence, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+
+export const meliOrderNumberSequence = pgSequence("meli_order_number_seq", { startWith: 1 });
 
 export const orders = pgTable("orders", {
   id: uuid("id").defaultRandom().primaryKey(),

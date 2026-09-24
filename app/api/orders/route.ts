@@ -33,19 +33,24 @@ export async function POST(request: Request) {
     }).filter((item): item is NonNullable<typeof item> => Boolean(item));
     if (!selected.length) return Response.json({ error: "Đơn hàng chưa có món" }, { status: 400 });
     const total = selected.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const code = `ME${Date.now().toString(36).toUpperCase().slice(-6)}`;
     const isTakeaway = payload.orderType === "takeaway";
     const db = getDb();
-    const [created] = await db.insert(orders).values({
-      code,
-      tableCode: isTakeaway ? null : payload.tableCode?.trim().slice(0, 20) || null,
-      orderType: isTakeaway ? "takeaway" : "dine_in",
-      source,
-      customerName: payload.customerName?.trim().slice(0, 80) ?? "",
-      note: payload.note?.trim().slice(0, 500) ?? "",
-      total,
-    }).returning();
-    await db.insert(orderItems).values(selected.map((item) => ({ orderId: created.id, itemName: item.name, price: item.price, quantity: item.quantity, notes: item.notes })));
+    const created = await db.transaction(async (tx) => {
+      // The sequence is shared by customer and staff orders, so concurrent requests get distinct numbers.
+      const [next] = await tx.execute(sql`SELECT nextval('public.meli_order_number_seq') AS number, to_char(now() AT TIME ZONE 'Asia/Ho_Chi_Minh', 'DDMM') AS day_month`);
+      const code = `MELI${String(next.day_month)}#${String(next.number)}`;
+      const [order] = await tx.insert(orders).values({
+        code,
+        tableCode: isTakeaway ? null : payload.tableCode?.trim().slice(0, 20) || null,
+        orderType: isTakeaway ? "takeaway" : "dine_in",
+        source,
+        customerName: payload.customerName?.trim().slice(0, 80) ?? "",
+        note: payload.note?.trim().slice(0, 500) ?? "",
+        total,
+      }).returning();
+      await tx.insert(orderItems).values(selected.map((item) => ({ orderId: order.id, itemName: item.name, price: item.price, quantity: item.quantity, notes: item.notes })));
+      return order;
+    });
     return Response.json({ order: created }, { status: 201 });
   } catch (error) {
     console.error("POST /api/orders", error);

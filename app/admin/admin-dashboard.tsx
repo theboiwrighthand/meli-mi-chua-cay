@@ -378,7 +378,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                     </div>
                     <div className="mt-3 border-y py-1">{order.items.map((item) =>
                       <div key={item.id} className="flex min-w-0 items-center justify-between gap-2 py-2.5 text-sm">
-                        <span className="min-w-0 break-words"><b className="mr-1.5 text-[#b92717]">{item.quantity}×</b>{item.itemName}</span>
+                        <span className="min-w-0 break-words"><b className="mr-1.5 text-[#b92717]">{item.quantity}×</b>{item.itemName}{item.notes?.trim() && <span className="ml-1 text-[.78em] font-normal text-zinc-500">({item.notes.trim()})</span>}</span>
                         <span className="shrink-0 font-medium">{formatMoney(item.price * item.quantity)}</span>
                       </div>
                     )}</div>
