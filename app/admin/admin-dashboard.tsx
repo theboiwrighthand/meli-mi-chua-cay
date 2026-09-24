@@ -262,10 +262,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           </button>;
         })}
       </div>
-      <div className="mb-3 grid grid-cols-2 gap-2 sm:mb-4 sm:grid-cols-3">
-        <Stat label="Đơn đang mở" value={`${activeCount}`} />
-        <Stat label="Đã thanh toán" value={`${orders.filter((o) => o.status === "paid").length} đơn`} />
-        <div className="col-span-2 sm:col-span-1"><Stat label="Doanh thu ghi nhận" value={formatMoney(todayRevenue)} /></div>
+      <div className="mb-3 grid grid-cols-3 divide-x divide-[#ead8c8] rounded-xl border border-[#ead8c8] bg-white p-2 xl:mb-4 xl:gap-3 xl:divide-x-0 xl:border-0 xl:bg-transparent xl:p-0">
+        <Stat label="Đơn đang mở" shortLabel="Đang mở" value={`${activeCount}`} />
+        <Stat label="Đã thanh toán" shortLabel="Đã trả" value={`${orders.filter((o) => o.status === "paid").length} đơn`} mobileValue={`${orders.filter((o) => o.status === "paid").length}`} />
+        <Stat label="Doanh thu ghi nhận" shortLabel="Doanh thu" value={formatMoney(todayRevenue)} />
       </div>
       {error && <p className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}
       <div className="mb-4 hidden flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3 xl:flex">
@@ -280,15 +280,12 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           </Button>
         </div>
       </div>
-      <div className="mb-4 grid min-w-0 gap-2 rounded-2xl border bg-white p-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between xl:hidden">
-        <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+      <div className="mb-3 flex min-w-0 items-center justify-between gap-2 px-1 xl:hidden">
+        <label className="flex min-w-0 cursor-pointer items-center gap-2 text-xs font-semibold text-[#594b44]">
           <Checkbox checked={mobileAllSelected} disabled={!mobileOrders.length || deleting} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...new Set([...current, ...mobileOrders.map((order) => order.id)])] : current.filter((id) => !mobileOrders.some((order) => order.id === id)))} aria-label={`Chọn tất cả đơn ${columns.find((column) => column.id === mobileTab)?.title}`} />
-          Chọn trong tab ({mobileOrders.length})
+          <span>Chọn tất cả <span className="text-zinc-500">({mobileOrders.length})</span></span>
         </label>
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          {selectedIds.length > 0 && <span className="text-xs text-zinc-600">Đã chọn {selectedIds.length}</span>}
-          <Button variant="destructive" size="sm" disabled={!selectedIds.length || deleting} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}><Trash2 className="size-4" /> Xóa đã chọn</Button>
-        </div>
+        {selectedIds.length > 0 && <Button variant="destructive" size="sm" className="h-8 shrink-0 rounded-lg px-2.5 text-xs" disabled={deleting} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}><Trash2 className="size-3.5" /> Xóa {selectedIds.length} đơn</Button>}
       </div>
       <div className="grid gap-4 xl:grid-cols-3">
         {columns.map((column) => {
@@ -504,7 +501,12 @@ function OrderCountBadge({ count, effect, active = false, desktop = false }: {
   </span>;
 }
 
-function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border bg-white px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">{label}</p><p className="mt-0.5 text-lg font-black leading-tight">{value}</p></div>; }
+function Stat({ label, shortLabel, value, mobileValue }: { label: string; shortLabel: string; value: string; mobileValue?: string }) {
+  return <div className="min-w-0 px-2 py-1 xl:rounded-xl xl:border xl:bg-white xl:px-3 xl:py-2.5">
+    <p className="truncate text-[10px] font-semibold text-zinc-500 xl:font-bold xl:uppercase xl:tracking-wide"><span className="xl:hidden">{shortLabel}</span><span className="hidden xl:inline">{label}</span></p>
+    <p className={`mt-0.5 min-w-0 font-black leading-tight tabular-nums xl:text-lg ${shortLabel === "Doanh thu" ? "text-[clamp(12px,3.4vw,16px)] [overflow-wrap:anywhere]" : "text-base"}`} title={value}><span className="xl:hidden">{mobileValue ?? value}</span><span className="hidden xl:inline">{value}</span></p>
+  </div>;
+}
 
 
 type EditLine = {
