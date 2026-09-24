@@ -34,11 +34,12 @@ export async function POST(request: Request) {
     if (!selected.length) return Response.json({ error: "Đơn hàng chưa có món" }, { status: 400 });
     const total = selected.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const code = `ME${Date.now().toString(36).toUpperCase().slice(-6)}`;
+    const isTakeaway = payload.orderType === "takeaway";
     const db = getDb();
     const [created] = await db.insert(orders).values({
       code,
-      tableCode: payload.tableCode?.trim().slice(0, 20) || null,
-      orderType: payload.orderType === "takeaway" ? "takeaway" : "dine_in",
+      tableCode: isTakeaway ? null : payload.tableCode?.trim().slice(0, 20) || null,
+      orderType: isTakeaway ? "takeaway" : "dine_in",
       source,
       customerName: payload.customerName?.trim().slice(0, 80) ?? "",
       note: payload.note?.trim().slice(0, 500) ?? "",

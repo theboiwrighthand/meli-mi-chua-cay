@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { Check, ChevronRight, Coffee, Flame, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { Check, ChevronRight, Coffee, Flame, LayoutDashboard, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -42,8 +43,9 @@ function photoFor(item: MenuItem, menu: MenuItem[]) {
   return itemPhotos[item.category][siblings.findIndex((entry) => entry.id === item.id) % itemPhotos[item.category].length];
 }
 
-export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCode?: string; menu: MenuItem[] }) {
+export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: { initialTableCode?: string; menu: MenuItem[]; isAdmin?: boolean }) {
   const [tableCode, setTableCode] = useState(initialTableCode);
+  const [isTakeaway, setIsTakeaway] = useState(false);
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [notes, setNotes] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
@@ -51,7 +53,7 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
   const [submitting, setSubmitting] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [success, setSuccess] = useState<{ code: string; total: number } | null>(null);
+  const [success, setSuccess] = useState<{ code: string; total: number; tableCode: string; isTakeaway: boolean } | null>(null);
   const [error, setError] = useState("");
 
   const lines = Object.values(cart);
@@ -90,7 +92,7 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
   async function submit() {
     if (!lines.length || submitting) return;
 
-    const normalizedTableCode = tableCode.trim();
+    const normalizedTableCode = isTakeaway ? "" : tableCode.trim();
     setSubmitting(true);
     setError("");
 
@@ -100,7 +102,7 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           tableCode: normalizedTableCode,
-          orderType: normalizedTableCode ? "dine_in" : "takeaway",
+          orderType: isTakeaway ? "takeaway" : "dine_in",
           customerName,
           note: [...notes, otherNote].filter(Boolean).join(", "),
           items: lines.map((line) => ({ id: line.id, quantity: line.quantity, notes })),
@@ -117,7 +119,7 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
       }
 
       setTableCode(normalizedTableCode);
-      setSuccess({ code: result.order.code, total: result.order.total });
+      setSuccess({ code: result.order.code, total: result.order.total, tableCode: normalizedTableCode, isTakeaway });
       setCart({});
       setNotes([]);
       setOtherNote("");
@@ -133,6 +135,7 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
     lines,
     total,
     tableCode,
+    isTakeaway,
     customerName,
     notes,
     otherNote,
@@ -140,6 +143,10 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
     submitting,
     change,
     setTableCode,
+    setIsTakeaway: (next: boolean) => {
+      setIsTakeaway(next);
+      if (next) setTableCode("");
+    },
     setCustomerName,
     setNotes,
     setOtherNote,
@@ -160,7 +167,7 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
           <p className="mt-5 text-sm font-bold text-brand-green">Đã gửi tới bếp</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight">Đơn {success.code}</h1>
           <p className="mt-3 text-sm text-brand-muted">
-            {tableCode ? `Bàn ${tableCode}` : "Mang về"} · {formatMoney(success.total)}
+            {success.isTakeaway ? "Mang về" : success.tableCode ? `Bàn ${success.tableCode}` : "Dùng tại chỗ"} · {formatMoney(success.total)}
           </p>
           <p className="mt-6 border-t border-brand-green/10 pt-5 text-sm leading-6 text-brand-muted">
             Quán đã nhận được đơn. Bạn vui lòng chờ nhân viên chuẩn bị món.
@@ -185,7 +192,10 @@ export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCod
         <div className="meli-hero-inner">
           <div className="meli-brand"><span aria-hidden="true">🍜</span><div><strong>Meli</strong><small>MÌ CHUA CAY</small></div></div>
           <div className="meli-hero-copy"><span>Hương vị thân quen · Nghĩa Tân</span><h1>Ăn là mê,<br /><em>Mì là Meli.</em></h1><p>Chọn món ngon, quán làm ngay.</p></div>
-          {tableCode.trim() && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
+          <div className="meli-hero-actions">
+            {tableCode.trim() && !isTakeaway && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
+            {isAdmin && <Link href="/admin" className="meli-admin-link" aria-label="Mở trang quản lý đơn" title="Quản lý đơn"><LayoutDashboard className="size-5" /></Link>}
+          </div>
         </div>
       </header>
 
@@ -324,6 +334,7 @@ type CartFormProps = {
   lines: CartLine[];
   total: number;
   tableCode: string;
+  isTakeaway: boolean;
   customerName: string;
   notes: string[];
   otherNote: string;
@@ -331,6 +342,7 @@ type CartFormProps = {
   submitting: boolean;
   change: (item: MenuItem, delta: number) => void;
   setTableCode: (value: string) => void;
+  setIsTakeaway: (value: boolean) => void;
   setCustomerName: (value: string) => void;
   setNotes: Dispatch<SetStateAction<string[]>>;
   setOtherNote: (value: string) => void;
@@ -343,6 +355,7 @@ function CartForm({
   lines,
   total,
   tableCode,
+  isTakeaway,
   customerName,
   notes,
   otherNote,
@@ -350,6 +363,7 @@ function CartForm({
   submitting,
   change,
   setTableCode,
+  setIsTakeaway,
   setCustomerName,
   setNotes,
   setOtherNote,
@@ -392,17 +406,23 @@ function CartForm({
         )}
 
         <div className="mt-5 space-y-4">
-          <label className="block text-sm font-semibold">
-            Số bàn
-            <Input
-              value={tableCode}
-              onChange={(event) => setTableCode(event.target.value)}
-              placeholder="Để trống nếu mang về"
-              maxLength={20}
-              disabled={submitting}
-              className="mt-2 h-11 rounded-xl border-brand-green/15 bg-white"
-            />
-          </label>
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold">
+              Số bàn
+              <Input
+                value={tableCode}
+                onChange={(event) => setTableCode(event.target.value)}
+                placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Có thể để trống"}
+                maxLength={20}
+                disabled={submitting || isTakeaway}
+                className="mt-2 h-11 rounded-xl border-brand-green/15 bg-white"
+              />
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-green/15 bg-white px-3 text-sm font-semibold">
+              <Checkbox checked={isTakeaway} disabled={submitting} onCheckedChange={(checked) => setIsTakeaway(checked === true)} />
+              Mang về
+            </label>
+          </div>
 
           <label className="block text-sm font-semibold">
             Tên khách <span className="font-normal text-brand-muted">(không bắt buộc)</span>

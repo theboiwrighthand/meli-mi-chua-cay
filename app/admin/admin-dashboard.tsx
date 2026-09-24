@@ -1,7 +1,8 @@
 "use client";
 
 import { type Dispatch, type FormEvent, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2, UtensilsCrossed } from "lucide-react";
+import Link from "next/link";
+import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,10 +13,9 @@ import { formatMoney, type MenuItem } from "@/lib/menu";
 type OrderItem = { id: number; menuItemId: string | null; itemName: string; price: number; quantity: number; notes: string };
 type Order = { id: string; code: string; tableCode: string | null; orderType: string; source: string; status: string; customerName: string; note: string; total: number; paymentStatus: string; createdAt: string; items: OrderItem[] };
 const columns = [
-  { id: "new", title: "Đơn mới", icon: Clock3, action: "Bắt đầu làm", next: "cooking" },
-  { id: "cooking", title: "Đang làm", icon: ChefHat, action: "Đã phục vụ", next: "served" },
-  { id: "served", title: "Đã phục vụ", icon: UtensilsCrossed, action: "Đã thanh toán", next: "paid" },
-  { id: "paid", title: "Hoàn thành", icon: CircleDollarSign, action: "", next: "" },
+  { id: "new", statuses: ["new"], title: "Đơn mới", icon: Clock3, actionIcon: ChefHat, action: "Đã làm", next: "cooking" },
+  { id: "cooking", statuses: ["cooking", "served"], title: "Đã làm", icon: ChefHat, actionIcon: CircleDollarSign, action: "Đã thanh toán", next: "paid" },
+  { id: "paid", statuses: ["paid"], title: "Đã thanh toán", icon: CircleDollarSign, actionIcon: CircleDollarSign, action: "", next: "" },
 ] as const;
 const quickNotes = ["Ít cay", "Không hành", "Không giá"];
 type OrderStatus = (typeof columns)[number]["id"];
@@ -162,9 +162,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
 
   const activeCount = orders.filter((order) => !["paid", "cancelled"].includes(order.status)).length;
   const todayRevenue = orders.filter((order) => order.status === "paid").reduce((sum, order) => sum + order.total, 0);
-  const visibleOrders = orders.filter((order) => columns.some((column) => column.id === order.status));
+  const visibleOrders = orders.filter((order) => columns.some((column) => column.statuses.some((status) => status === order.status)));
   const allSelected = visibleOrders.length > 0 && visibleOrders.every((order) => selectedIds.includes(order.id));
-  const mobileOrders = orders.filter((order) => order.status === mobileTab);
+  const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status));
   const mobileAllSelected = mobileOrders.length > 0 && mobileOrders.every((order) => selectedIds.includes(order.id));
 
   function selectMobileTab(status: OrderStatus) {
@@ -176,7 +176,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     <header className="border-b border-[#e9d7c5] bg-[#fffaf2]">
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 px-4 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm"><Store className="size-5" /></div>
+          <Link href="/" className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm transition-colors hover:bg-[#9e281c]" aria-label="Về menu đặt món"><Store className="size-5" /></Link>
           <div className="min-w-0"><h1 className="truncate text-base font-black sm:text-lg">MELI · Quản lý đơn</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">Xin chào, {ownerName}</p></div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -189,10 +189,10 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       </div>
     </header>
     <section className="mx-auto min-w-0 max-w-[1500px] px-4 py-4 sm:py-6">
-      <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-2 gap-2 border-y border-[#e9d7c5] bg-[#fff7eb]/95 px-4 py-3 backdrop-blur xl:hidden">
+      <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e9d7c5] bg-[#fff7eb]/95 px-4 py-3 backdrop-blur xl:hidden">
         {columns.map((column) => {
           const Icon = column.icon;
-          const count = orders.filter((order) => order.status === column.id).length;
+          const count = orders.filter((order) => column.statuses.some((status) => status === order.status)).length;
           return <button key={`${column.id}-${column.id === "new" ? newOrderSignal : 0}`} id={`order-tab-${column.id}`} type="button" role="tab" tabIndex={mobileTab === column.id ? 0 : -1} aria-controls={`order-panel-${column.id}`} aria-selected={mobileTab === column.id} onClick={() => selectMobileTab(column.id)} onKeyDown={(event) => {
             const index = columns.findIndex((entry) => entry.id === column.id);
             const nextIndex = event.key === "ArrowRight" ? (index + 1) % columns.length
@@ -209,7 +209,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           </button>;
         })}
       </div>
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:mb-6 sm:grid-cols-3 sm:gap-3">
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:mb-4 sm:grid-cols-3">
         <Stat label="Đơn đang mở" value={`${activeCount}`} />
         <Stat label="Đã thanh toán" value={`${orders.filter((o) => o.status === "paid").length} đơn`} />
         <div className="col-span-2 sm:col-span-1"><Stat label="Doanh thu ghi nhận" value={formatMoney(todayRevenue)} /></div>
@@ -237,10 +237,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           <Button variant="destructive" size="sm" disabled={!selectedIds.length || deleting} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}><Trash2 className="size-4" /> Xóa đã chọn</Button>
         </div>
       </div>
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid gap-4 xl:grid-cols-3">
         {columns.map((column) => {
           const Icon = column.icon;
-          const list = orders.filter((order) => order.status === column.id);
+          const ActionIcon = column.actionIcon;
+          const list = orders.filter((order) => column.statuses.some((status) => status === order.status));
           return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-2xl bg-[#eaede8] p-2 sm:p-3 xl:rounded-3xl ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
@@ -259,12 +260,12 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                             <span className="text-zinc-600">{order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</span>
                             <time dateTime={order.createdAt} title="Giờ Việt Nam" className="whitespace-nowrap text-zinc-500">{formatOrderTime(order.createdAt)}</time>
                           </div>
-                          <h3 className="mt-1.5 min-w-0 break-words text-lg font-black leading-tight">{order.tableCode ? `Bàn ${order.tableCode}` : "Mang về"}</h3>
+                          <h3 className="mt-1.5 min-w-0 break-words text-lg font-black leading-tight">{order.orderType === "takeaway" ? "Mang về" : order.tableCode ? `Bàn ${order.tableCode}` : "Dùng tại chỗ"}</h3>
                         </div>
                       </div>
-                      {column.next && <Button size="sm" className="h-9 shrink-0 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : column.action}</Button>}
+                      {column.next && <Button size="sm" className="h-9 shrink-0 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.action}</>}</Button>}
                     </div>
-                    <div className="mt-3 divide-y border-y">{order.items.map((item) =>
+                    <div className="mt-3 border-y py-1">{order.items.map((item) =>
                       <div key={item.id} className="flex min-w-0 items-center justify-between gap-2 py-2.5 text-sm">
                         <span className="min-w-0 break-words"><b className="mr-1.5 text-[#b92717]">{item.quantity}×</b>{item.itemName}</span>
                         <span className="shrink-0 font-medium">{formatMoney(item.price * item.quantity)}</span>
@@ -306,7 +307,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   </main>;
 }
 
-function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-1 text-2xl font-black">{value}</p></div>; }
+function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border bg-white px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">{label}</p><p className="mt-0.5 text-lg font-black leading-tight">{value}</p></div>; }
 
 
 type EditLine = {
@@ -330,6 +331,7 @@ function EditOrderDialog({
   const initialNote = parseOrderNote(order.note);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [tableCode, setTableCode] = useState(order.tableCode ?? "");
+  const [isTakeaway, setIsTakeaway] = useState(order.orderType === "takeaway");
   const [customerName, setCustomerName] = useState(order.customerName);
   const [notes, setNotes] = useState<string[]>(initialNote.notes);
   const [otherNote, setOtherNote] = useState(initialNote.otherNote);
@@ -375,7 +377,9 @@ function EditOrderDialog({
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          tableCode, customerName, note: composeOrderNote(notes, otherNote),
+          tableCode: isTakeaway ? "" : tableCode,
+          orderType: isTakeaway ? "takeaway" : "dine_in",
+          customerName, note: composeOrderNote(notes, otherNote),
           items: lines.map((line) => line.existingId
             ? { id: line.existingId, quantity: line.quantity }
             : { menuItemId: line.menuItemId, quantity: line.quantity }),
@@ -399,9 +403,15 @@ function EditOrderDialog({
     </DialogHeader>
     <form onSubmit={(event) => void save(event)} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="space-y-1 text-sm font-semibold">Số bàn (để trống nếu mang về)
-          <Input value={tableCode} maxLength={20} disabled={saving} onChange={(event) => setTableCode(event.target.value)} placeholder="Số bàn" />
-        </label>
+        <div className="space-y-2">
+          <label className="space-y-1 text-sm font-semibold">Số bàn
+            <Input value={tableCode} maxLength={20} disabled={saving || isTakeaway} onChange={(event) => setTableCode(event.target.value)} placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Có thể để trống"} />
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
+            <Checkbox checked={isTakeaway} disabled={saving} onCheckedChange={(checked) => { const next = checked === true; setIsTakeaway(next); if (next) setTableCode(""); }} />
+            Mang về
+          </label>
+        </div>
         <label className="space-y-1 text-sm font-semibold">Tên khách
           <Input value={customerName} maxLength={80} disabled={saving} onChange={(event) => setCustomerName(event.target.value)} placeholder="Tên khách" />
         </label>
@@ -474,6 +484,7 @@ function OrderNoteFields({
 function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: MenuItem[] }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [tableCode, setTableCode] = useState("");
+  const [isTakeaway, setIsTakeaway] = useState(false);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [notes, setNotes] = useState<string[]>([]);
   const [otherNote, setOtherNote] = useState("");
@@ -484,6 +495,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
 
   function reset() {
     setTableCode("");
+    setIsTakeaway(false);
     setCart({});
     setNotes([]);
     setOtherNote("");
@@ -492,7 +504,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
 
   async function create() {
     if (saving || !selected.length) return;
-    const normalizedTableCode = tableCode.trim();
+    const normalizedTableCode = isTakeaway ? "" : tableCode.trim();
     setSaving(true);
     setError("");
     try {
@@ -502,7 +514,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
         body: JSON.stringify({
           source: "staff_pos",
           tableCode: normalizedTableCode,
-          orderType: normalizedTableCode ? "dine_in" : "takeaway",
+          orderType: isTakeaway ? "takeaway" : "dine_in",
           note: composeOrderNote(notes, otherNote),
           items: selected.map((item) => ({ id: item.id, quantity: cart[item.id], notes })),
         }),
@@ -521,9 +533,15 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
   return <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-3xl" onOpenAutoFocus={(event) => { event.preventDefault(); titleRef.current?.focus(); }}>
     <DialogHeader>
       <DialogTitle ref={titleRef} tabIndex={-1} className="text-2xl outline-none">Tạo đơn tại quầy</DialogTitle>
-      <DialogDescription>Chọn món và thêm thông tin bàn nếu cần.</DialogDescription>
+      <DialogDescription>Chọn món và hình thức dùng món.</DialogDescription>
     </DialogHeader>
-    <Input value={tableCode} maxLength={20} disabled={saving} onChange={(event) => setTableCode(event.target.value)} placeholder="Số bàn — để trống nếu mang về" />
+    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <Input value={tableCode} maxLength={20} disabled={saving || isTakeaway} onChange={(event) => setTableCode(event.target.value)} placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Số bàn (có thể để trống)"} />
+      <label className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-semibold">
+        <Checkbox checked={isTakeaway} disabled={saving} onCheckedChange={(checked) => { const next = checked === true; setIsTakeaway(next); if (next) setTableCode(""); }} />
+        Mang về
+      </label>
+    </div>
     <div className="grid gap-2 sm:grid-cols-2">
       {menu.map((item) => {
         const quantity = cart[item.id] ?? 0;

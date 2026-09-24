@@ -5,7 +5,7 @@ import { isAdminRequest } from "../../../../lib/admin";
 
 const orderIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const allowedStatuses = new Set(["new", "cooking", "served", "paid", "cancelled"]);
+const allowedStatuses = new Set(["new", "cooking", "paid"]);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest())) return Response.json({ error: "Không có quyền truy cập" }, { status: 401 });
@@ -24,7 +24,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
 
 type EditedItem = { id?: number; menuItemId?: string; quantity: number };
-type EditPayload = { tableCode: string; customerName: string; note: string; items: EditedItem[] };
+type EditPayload = { tableCode: string; orderType: string; customerName: string; note: string; items: EditedItem[] };
 
 class OrderEditError extends Error {
   constructor(message: string, readonly status: number) {
@@ -39,6 +39,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
   const payload = await request.json().catch(() => null) as EditPayload | null;
   if (!payload || typeof payload.tableCode !== "string" || payload.tableCode.length > 20
+    || !["dine_in", "takeaway"].includes(payload.orderType)
     || typeof payload.customerName !== "string" || payload.customerName.length > 80
     || typeof payload.note !== "string" || payload.note.length > 500
     || !Array.isArray(payload.items) || payload.items.length < 1 || payload.items.length > 50) {
@@ -85,10 +86,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
       await tx.delete(orderItems).where(eq(orderItems.orderId, id));
       await tx.insert(orderItems).values(lines);
-      const tableCode = payload.tableCode.trim();
+      const isTakeaway = payload.orderType === "takeaway";
+      const tableCode = isTakeaway ? "" : payload.tableCode.trim();
       const [updated] = await tx.update(orders).set({
         tableCode: tableCode || null,
-        orderType: tableCode ? "dine_in" : "takeaway",
+        orderType: isTakeaway ? "takeaway" : "dine_in",
         customerName: payload.customerName.trim(),
         note: payload.note.trim(),
         total,

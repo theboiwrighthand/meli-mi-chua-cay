@@ -188,7 +188,10 @@ body {
 .meli-hero-copy p { margin-top: .7rem; color: #ffe5ce; }
 .meli-hero-photo { position: absolute; inset: -85px -20px -130px auto; width: min(36%, 490px); transform: rotate(-12deg); border-radius: 50%; overflow: hidden; border: 10px solid #fff0d7; box-shadow: 0 15px 40px #4511098a; }
 .meli-hero-photo img { transform: rotate(12deg) scale(1.22); }
-.meli-table-badge { align-self: flex-start; border: 1px solid #ffdfc6; border-radius: 999px; background: #fff5e9; padding: .5rem .9rem; font-size: .9rem; font-weight: 800; color: #8f291d; }
+.meli-hero-actions { position: relative; z-index: 2; display: flex; align-self: flex-start; align-items: center; gap: .5rem; }
+.meli-table-badge { border: 1px solid #ffdfc6; border-radius: 999px; background: #fff5e9; padding: .5rem .9rem; font-size: .9rem; font-weight: 800; color: #8f291d; }
+.meli-admin-link { display: grid; width: 42px; height: 42px; flex: none; place-items: center; border: 1px solid #ffdfc6; border-radius: 12px; background: #fff5e9; color: #8f291d; transition: background-color .2s, color .2s; }
+.meli-admin-link:hover { background: #ffe3c8; color: #6f1d15; }
 .meli-layout { align-items: start; }
 .meli-tabs { display: flex; gap: .45rem; overflow-x: auto; padding: .1rem .1rem 1rem; scrollbar-width: none; border-bottom: 1px solid #e9dac7; }
 .meli-tabs::-webkit-scrollbar { display: none; }
@@ -235,7 +238,9 @@ body {
   .meli-hero-copy h1 { font-size: 1.8rem; }
   .meli-hero-copy p { font-size: .75rem; }
   .meli-hero-photo { width: 58%; inset: -5px -27% -45px auto; border-width: 6px; }
-  .meli-table-badge { position: absolute; right: 1rem; top: 1rem; font-size: .75rem; padding: .4rem .6rem; }
+  .meli-hero-actions { position: absolute; right: 1rem; top: 1rem; }
+  .meli-table-badge { font-size: .75rem; padding: .4rem .6rem; }
+  .meli-admin-link { width: 38px; height: 38px; }
   .meli-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
   .meli-food-image { height: 115px; }
   .meli-food-content { min-height: 137px; padding: .65rem; }
