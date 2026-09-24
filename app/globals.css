@@ -129,7 +129,7 @@ body {
 /* Meli: the warm, lively ordering surface. */
 .meli-hero {
   position: relative;
-  min-height: 216px;
+  min-height: 240px;
   overflow: hidden;
   background: radial-gradient(circle at 62% 18%, #cc5632 0, transparent 32%), linear-gradient(105deg, #9e281c 0%, #b83722 62%, #751c16 100%);
   color: #fff6e9;
@@ -152,7 +152,7 @@ body {
   justify-content: space-between;
   gap: 3rem;
   max-width: 1320px;
-  min-height: 216px;
+  min-height: 240px;
   margin: auto;
   padding: 1.5rem 2rem;
 }
