@@ -160,12 +160,12 @@ body {
 .meli-brand > span { font-size: 2rem; }
 .meli-brand strong { display: block; font-size: 2.15rem; font-weight: 800; letter-spacing: -.07em; line-height: 1; }
 .meli-brand small { display: block; margin-top: .25rem; font-size: .63rem; font-weight: 700; letter-spacing: .24em; }
-.meli-hero-copy { flex: 1; max-width: 440px; padding-left: 1rem; }
+.meli-hero-copy { position: absolute; top: 2.2rem; left: 33%; width: 31%; max-width: 440px; }
 .meli-hero-copy > span { font-size: .75rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: #ffdbb3; }
 .meli-hero-copy h1 { margin-top: .5rem; font-size: clamp(2rem, 3.6vw, 3.25rem); font-weight: 800; line-height: 1.13; letter-spacing: -.04em; }
 .meli-hero-copy em { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.02em; }
 .meli-hero-copy p { margin-top: .7rem; color: #ffe5ce; }
-.meli-hero-photo { position: absolute; inset: -85px -20px -130px auto; width: min(46%, 590px); transform: rotate(-12deg); border-radius: 50%; overflow: hidden; border: 10px solid #fff0d7; box-shadow: 0 15px 40px #4511098a; }
+.meli-hero-photo { position: absolute; inset: -85px -20px -130px auto; width: min(36%, 490px); transform: rotate(-12deg); border-radius: 50%; overflow: hidden; border: 10px solid #fff0d7; box-shadow: 0 15px 40px #4511098a; }
 .meli-hero-photo img { transform: rotate(12deg) scale(1.22); }
 .meli-table-badge { align-self: flex-start; border: 1px solid #ffdfc6; border-radius: 999px; background: #fff5e9; padding: .5rem .9rem; font-size: .9rem; font-weight: 800; color: #8f291d; }
 .meli-layout { align-items: start; }
@@ -200,8 +200,8 @@ body {
 .meli-cart form > div:last-child { background: #fff4e6; }
 @media (max-width: 1023px) {
   .meli-hero, .meli-hero-inner { min-height: 180px; }
-  .meli-hero-photo { width: 45%; inset: -60px -8% -95px auto; }
-  .meli-hero-copy { margin-right: 32%; }
+  .meli-hero-photo { width: 39%; inset: -60px -8% -95px auto; }
+  .meli-hero-copy { left: 29%; width: 34%; }
 }
 @media (max-width: 639px) {
   .meli-hero, .meli-hero-inner { min-height: 180px; }
@@ -209,7 +209,7 @@ body {
   .meli-brand > span { font-size: 1.35rem; }
   .meli-brand strong { font-size: 1.6rem; }
   .meli-brand small { font-size: .5rem; }
-  .meli-hero-copy { position: relative; z-index: 2; margin: 1.2rem 30% 0 0; padding: 0; }
+  .meli-hero-copy { position: relative; top: auto; left: auto; width: auto; max-width: none; z-index: 2; margin: 1.2rem 30% 0 0; padding: 0; }
   .meli-hero-copy > span { display: none; }
   .meli-hero-copy h1 { font-size: 1.8rem; }
   .meli-hero-copy p { font-size: .75rem; }
