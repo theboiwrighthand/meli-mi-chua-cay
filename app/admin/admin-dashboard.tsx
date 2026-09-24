@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatMoney, menu } from "@/lib/menu";
+import { formatMoney, type MenuItem } from "@/lib/menu";
 
 type OrderItem = { id: number; itemName: string; price: number; quantity: number; notes: string };
 type Order = { id: string; code: string; tableCode: string | null; orderType: string; source: string; status: string; customerName: string; note: string; total: number; paymentStatus: string; createdAt: string; items: OrderItem[] };
@@ -21,7 +21,7 @@ const columns = [
 const quickNotes = ["Ít cay", "Không hành", "Không giá"];
 
 
-export function AdminDashboard({ ownerName }: { ownerName: string }) {
+export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: MenuItem[] }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -109,7 +109,7 @@ export function AdminDashboard({ ownerName }: { ownerName: string }) {
           <Link href="/"><Button variant="outline">Menu khách</Button></Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="bg-[#bd3b22] hover:bg-[#9e281c]"><Plus /> Tạo đơn</Button></DialogTrigger>
-            <CreateOrderDialog onCreated={() => { setOpen(false); load(true); }} />
+            <CreateOrderDialog menu={menu} onCreated={() => { setOpen(false); load(true); }} />
           </Dialog>
         </div>
       </div>
@@ -191,7 +191,7 @@ export function AdminDashboard({ ownerName }: { ownerName: string }) {
 
 function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-1 text-2xl font-black">{value}</p></div>; }
 
-function CreateOrderDialog({ onCreated }: { onCreated: () => void }) {
+function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: MenuItem[] }) {
   const [tableCode, setTableCode] = useState(""); const [cart, setCart] = useState<Record<string, number>>({}); const [notes, setNotes] = useState<string[]>([]); const [otherNote, setOtherNote] = useState(""); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
   const selected = menu.filter((item) => cart[item.id]); const total = useMemo(() => selected.reduce((sum, item) => sum + item.price * cart[item.id], 0), [selected, cart]);
   async function create() { setSaving(true); setError(""); try { const response = await fetch("/api/orders", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ source: "staff_pos", tableCode, orderType: tableCode ? "dine_in" : "takeaway", note: [...notes, otherNote].filter(Boolean).join(", "), items: selected.map((item) => ({ id: item.id, quantity: cart[item.id], notes })) }) }); const result = await response.json(); if (!response.ok) throw new Error(result.error); onCreated(); } catch (err) { setError(err instanceof Error ? err.message : "Không thể tạo đơn"); } finally { setSaving(false); } }

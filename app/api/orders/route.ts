@@ -2,7 +2,7 @@ import { desc, inArray } from "drizzle-orm";
 import { getDb } from "../../../db";
 import { orderItems, orders } from "../../../db/schema";
 import { isAdminRequest } from "../../../lib/admin";
-import { menu } from "../../../lib/menu";
+import { getActiveMenu } from "../../../lib/menu-server";
 
 type IncomingItem = { id?: string; quantity?: number; notes?: string[] };
 
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
     const payload = await request.json() as { tableCode?: string; orderType?: string; source?: string; customerName?: string; note?: string; items?: IncomingItem[] };
     const source = payload.source === "staff_pos" ? "staff_pos" : "customer_qr";
     if (source === "staff_pos" && !(await isAdminRequest())) return Response.json({ error: "Không có quyền tạo đơn nhân viên" }, { status: 401 });
+    const menu = await getActiveMenu();
     const selected = (payload.items ?? []).map((incoming) => {
       const found = menu.find((item) => item.id === incoming.id);
       const quantity = Math.max(1, Math.min(20, Math.floor(incoming.quantity ?? 1)));

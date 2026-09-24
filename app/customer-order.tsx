@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatMoney, menu, type MenuItem } from "@/lib/menu";
+import { formatMoney, type MenuItem } from "@/lib/menu";
 
 type CartLine = MenuItem & { quantity: number };
 
@@ -37,12 +37,12 @@ const itemPhotos: Record<MenuItem["category"], string[]> = {
   drinks: ["https://images.unsplash.com/photo-1767627942883-0a6443183f66?w=720&q=78"],
 };
 
-function photoFor(item: MenuItem) {
+function photoFor(item: MenuItem, menu: MenuItem[]) {
   const siblings = menu.filter((entry) => entry.category === item.category);
   return itemPhotos[item.category][siblings.findIndex((entry) => entry.id === item.id) % itemPhotos[item.category].length];
 }
 
-export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: string }) {
+export function CustomerOrder({ initialTableCode = "", menu }: { initialTableCode?: string; menu: MenuItem[] }) {
   const [tableCode, setTableCode] = useState(initialTableCode);
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [notes, setNotes] = useState<string[]>([]);
@@ -218,7 +218,7 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
                       return (
                         <article key={item.id} className="meli-food-card">
                           <div className="meli-food-image">
-                            <Image src={photoFor(item)} alt={`Ảnh minh họa ${item.name}`} fill sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" />
+                            <Image src={photoFor(item, menu)} alt={`Ảnh minh họa ${item.name}`} fill sizes="(max-width: 640px) 45vw, (max-width: 1280px) 30vw, 220px" className="object-cover" />
                           </div>
                           <div className="meli-food-content">
                             <h3>{item.name}</h3>
