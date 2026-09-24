@@ -148,58 +148,72 @@ body {
 }
 
 @keyframes order-count-pop {
-  0% { transform: scale(.7); }
-  45% { transform: scale(1.35); }
-  75% { transform: scale(.92); }
+  0% { transform: scale(.6); }
+  40% { transform: scale(1.55); }
+  70% { transform: scale(.9); }
   100% { transform: scale(1); }
 }
 
 @keyframes order-count-shrink {
   0% { transform: scale(1); }
-  45% { transform: scale(.7); }
+  40% { transform: scale(.6); }
   100% { transform: scale(1); }
+}
+
+@keyframes order-count-ring {
+  0% { opacity: .9; transform: scale(.65); }
+  100% { opacity: 0; transform: scale(2.4); }
 }
 
 @keyframes order-count-firework {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(.2) rotate(0deg); }
-  20% { opacity: 1; }
-  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.8) rotate(300deg); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(300deg); }
 }
 
 @keyframes order-count-subtract {
-  0% { opacity: 0; transform: translate(-50%, -30%) scale(.7); }
+  0% { opacity: 0; transform: translate(-50%, -70%) scale(.6); }
   25% { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, 135%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 100%) scale(1.2); }
 }
 
-.order-count-up { animation: order-count-pop 650ms ease-out both; }
-.order-count-down { animation: order-count-shrink 550ms ease-out both; }
+.order-count-up { animation: order-count-pop 750ms ease-out both; }
+.order-count-up::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border: 2px solid #f59e0b;
+  border-radius: 999px;
+  pointer-events: none;
+  animation: order-count-ring 850ms ease-out both;
+}
+.order-count-down { animation: order-count-shrink 650ms ease-out both; }
 .order-count-confetti {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 5px;
-  height: 8px;
+  width: 6px;
+  height: 10px;
   border-radius: 1px;
-  animation: order-count-firework 900ms ease-out both;
+  animation: order-count-firework 950ms ease-out both;
 }
 .order-count-minus {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 100%;
   color: #b92717;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 900;
-  white-space: nowrap;
+  line-height: 1;
   text-shadow: 0 1px 2px white;
   animation: order-count-subtract 800ms ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .order-count-up, .order-count-down, .order-count-confetti, .order-count-minus {
+  .order-count-up, .order-count-down, .order-count-confetti, .order-count-minus, .order-count-up::after {
     animation: none;
   }
-  .order-count-confetti, .order-count-minus { display: none; }
+  .order-count-confetti, .order-count-minus, .order-count-up::after { display: none; }
 }
 
 /* Meli: the warm, lively ordering surface. */

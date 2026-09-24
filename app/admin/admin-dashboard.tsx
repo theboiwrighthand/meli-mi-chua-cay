@@ -203,10 +203,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Không thể xóa đơn hàng");
       const removedIds = new Set<string>(deleteTarget.kind === "single" ? [result.deletedId] : result.deletedIds);
-      setOrders((current) => current.filter((order) => !removedIds.has(order.id)));
       setSelectedIds((current) => current.filter((id) => !removedIds.has(id)));
-      setDeleteTarget(null);
       await load(true);
+      setDeleteTarget(null);
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Không thể xóa đơn hàng");
     } finally {
@@ -299,11 +298,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-2xl bg-[#eaede8] p-2 sm:p-3 xl:rounded-3xl ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
-              <OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop />
+              <span className="hidden xl:inline-flex"><OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop /></span>
             </div>
-            <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-2 text-[11px] font-medium text-zinc-600 xl:hidden">
-              <span className="inline-flex items-center gap-1"><ArrowRight className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Đã làm" : column.id === "cooking" ? "Thanh toán" : "Xóa đơn"}</span>
-              <span className="inline-flex items-center gap-1"><ArrowLeft className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Xóa đơn" : column.id === "cooking" ? "Đơn mới" : "Chưa thanh toán"}</span>
+            <div className="mb-2 flex items-center justify-between gap-2 px-2 text-[11px] font-semibold text-zinc-600 xl:hidden">
+              <span className="inline-flex min-w-0 items-center gap-1 text-left"><ArrowLeft className="size-3.5 shrink-0" aria-hidden="true" />{column.id === "new" ? "Xóa đơn" : column.id === "cooking" ? "Đơn mới" : "Chưa thanh toán"}</span>
+              <span className="inline-flex min-w-0 items-center gap-1 text-right">{column.id === "new" ? "Đã làm" : column.id === "cooking" ? "Thanh toán" : "Xóa đơn"}<ArrowRight className="size-3.5 shrink-0" aria-hidden="true" /></span>
             </div>
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
@@ -500,7 +499,7 @@ function OrderCountBadge({ count, effect, active = false, desktop = false }: {
         <i key={index} className="order-count-confetti" style={{
           "--dx": `${dx}px`, "--dy": `${dy}px`, backgroundColor: confettiColors[index],
         } as CSSProperties} />
-      ) : <span className="order-count-minus">−{Math.abs(effect.change)}</span>}
+      ) : <span className="order-count-minus" title={`Giảm ${Math.abs(effect.change)} đơn`}>−</span>}
     </span>}
   </span>;
 }
