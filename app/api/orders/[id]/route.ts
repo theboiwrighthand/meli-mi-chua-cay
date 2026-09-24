@@ -10,18 +10,35 @@ const allowedStatuses = new Set(["new", "cooking", "paid"]);
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest())) return Response.json({ error: "Không có quyền truy cập" }, { status: 401 });
   const { id } = await context.params;
-  const payload = await request.json() as { status?: string };
-  if (!orderIdPattern.test(id) || !allowedStatuses.has(payload.status ?? "")) return Response.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
+  const payload = await request.json().catch(() => null) as { status?: string; confirmUnpay?: boolean } | null;
+  if (!orderIdPattern.test(id) || !allowedStatuses.has(payload?.status ?? "")) {
+    return Response.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
+  }
   try {
-    const db = getDb();
-    const [updated] = await db.update(orders).set({ status: payload.status!, paymentStatus: payload.status === "paid" ? "paid" : undefined, updatedAt: sql`now()` }).where(eq(orders.id, id)).returning();
-    return updated ? Response.json({ order: updated }) : Response.json({ error: "Không tìm thấy đơn" }, { status: 404 });
+    const updated = await getDb().transaction(async (tx) => {
+      const locked = await tx.execute(sql`SELECT status FROM public.orders WHERE id = ${id}::uuid FOR UPDATE`);
+      if (!locked.length) return { error: "Không tìm thấy đơn", status: 404 } as const;
+      const current = String(locked[0].status);
+      const next = payload!.status!;
+      const allowed = current === "new" && next === "cooking"
+        || (current === "cooking" || current === "served") && (next === "new" || next === "paid")
+        || current === "paid" && next === "cooking" && payload?.confirmUnpay === true;
+      if (!allowed) return { error: "Không thể chuyển trạng thái đơn này", status: 409 } as const;
+      const [order] = await tx.update(orders).set({
+        status: next,
+        paymentStatus: next === "paid" ? "paid" : "unpaid",
+        updatedAt: sql`now()`,
+      }).where(eq(orders.id, id)).returning();
+      return { order };
+    });
+    return "error" in updated
+      ? Response.json({ error: updated.error }, { status: updated.status })
+      : Response.json({ order: updated.order });
   } catch (error) {
     console.error("PATCH /api/orders", error);
     return Response.json({ error: "Không thể cập nhật đơn" }, { status: 500 });
   }
 }
-
 
 type EditedItem = { id?: number; menuItemId?: string; quantity: number };
 type EditPayload = { tableCode: string; orderType: string; customerName: string; note: string; items: EditedItem[] };

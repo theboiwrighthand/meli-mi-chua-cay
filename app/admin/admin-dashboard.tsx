@@ -1,6 +1,6 @@
 "use client";
 
-import { type Dispatch, type FormEvent, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Store, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -57,9 +57,12 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [open, setOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<OrderStatus>("new");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string; confirmTitle?: string } | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [unpayTarget, setUnpayTarget] = useState<Order | null>(null);
+  const [unpayLoading, setUnpayLoading] = useState(false);
+  const [unpayError, setUnpayError] = useState("");
   const [editTarget, setEditTarget] = useState<Order | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const updatingIdsRef = useRef(new Set<string>());
@@ -106,8 +109,8 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     return () => { clearTimeout(initial); clearInterval(timer); };
   }, [load]);
 
-  async function updateStatus(id: string, status: string) {
-    if (updatingIdsRef.current.has(id)) return;
+  async function updateStatus(id: string, status: string, confirmUnpay = false): Promise<boolean> {
+    if (updatingIdsRef.current.has(id)) return false;
     updatingIdsRef.current.add(id);
     setUpdatingIds([...updatingIdsRef.current]);
     setError("");
@@ -116,24 +119,48 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       const response = await fetch(`/api/orders/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, confirmUnpay }),
       });
       if (!response.ok) {
         const result = await response.json().catch(() => null);
         throw new Error(result?.error || "Không thể cập nhật trạng thái đơn");
       }
       await load(true);
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể cập nhật trạng thái đơn");
+      return false;
     } finally {
       updatingIdsRef.current.delete(id);
       setUpdatingIds([...updatingIdsRef.current]);
     }
   }
 
-  function requestDelete(kind: "single" | "bulk", ids: string[], label: string) {
+  function requestDelete(kind: "single" | "bulk", ids: string[], label: string, confirmTitle?: string) {
     setDeleteError("");
-    setDeleteTarget({ kind, ids, label });
+    setDeleteTarget({ kind, ids, label, confirmTitle });
+  }
+
+  function handleSwipe(order: Order, direction: "left" | "right") {
+    if (order.status === "new") {
+      if (direction === "left") requestDelete("single", [order.id], `đơn ${order.code}`);
+      else void updateStatus(order.id, "cooking");
+    } else if (order.status === "cooking" || order.status === "served") {
+      void updateStatus(order.id, direction === "left" ? "new" : "paid");
+    } else if (order.status === "paid") {
+      if (direction === "left") { setUnpayError(""); setUnpayTarget(order); }
+      else requestDelete("single", [order.id], `đơn ${order.code}`, "Xoá đơn đã thanh toán này");
+    }
+  }
+
+  async function confirmUnpay() {
+    if (!unpayTarget || unpayLoading) return;
+    setUnpayLoading(true);
+    setUnpayError("");
+    const success = await updateStatus(unpayTarget.id, "cooking", true);
+    if (success) setUnpayTarget(null);
+    else setUnpayError("Không thể chuyển đơn sang chưa thanh toán. Vui lòng thử lại.");
+    setUnpayLoading(false);
   }
 
   async function confirmDelete() {
@@ -247,9 +274,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
               <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black">{list.length}</span>
             </div>
+            <p className="mb-2 px-2 text-[11px] text-zinc-600 xl:hidden">{column.id === "new" ? "Vuốt phải: Đã làm · Vuốt trái: Xóa đơn" : column.id === "cooking" ? "Vuốt phải: Thanh toán · Vuốt trái: Đơn mới" : "Vuốt phải: Xóa đơn · Vuốt trái: Chưa thanh toán"}</p>
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
-                <article key={order.id} className="min-w-0 overflow-hidden rounded-xl border border-[#c83220] bg-white shadow-sm">
+                <SwipeableOrderCard key={order.id} order={order} busy={updatingIds.includes(order.id) || deleting} onSwipe={handleSwipe}>
+                <article className="min-w-0 overflow-hidden rounded-xl border border-[#c83220] bg-white shadow-sm">
                   <div className="p-3 sm:p-4">
                     <div className="flex min-w-0 items-start justify-between gap-2">
                       <div className="flex min-w-0 items-start gap-2.5">
@@ -287,6 +316,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                     <b className="shrink-0 text-base text-[#b92717] sm:text-lg">{formatMoney(order.total)}</b>
                   </div>
                 </article>
+                </SwipeableOrderCard>
               )}
             </div>
           </div>;
@@ -296,10 +326,23 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     <Dialog open={editTarget !== null} onOpenChange={(next) => { if (!next && !savingEdit) setEditTarget(null); }}>
       {editTarget && <EditOrderDialog order={editTarget} menu={menu} onSavingChange={setSavingEdit} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); void load(true); }} />}
     </Dialog>
+    <Dialog open={unpayTarget !== null} onOpenChange={(next) => { if (!next && !unpayLoading) { setUnpayTarget(null); setUnpayError(""); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Chuyển đơn này thành chưa thanh toán</DialogTitle>
+          <DialogDescription>Đơn {unpayTarget?.code} sẽ trở lại tab Đã làm và không còn được tính là đã thanh toán.</DialogDescription>
+        </DialogHeader>
+        {unpayError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{unpayError}</p>}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" disabled={unpayLoading} onClick={() => setUnpayTarget(null)}>Không, giữ lại</Button>
+          <Button disabled={unpayLoading} onClick={() => void confirmUnpay()}>{unpayLoading ? "Đang chuyển..." : "Đồng ý chuyển"}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     <Dialog open={deleteTarget !== null} onOpenChange={(next) => { if (!next && !deleting) { setDeleteTarget(null); setDeleteError(""); } }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Xóa {deleteTarget?.label}?</DialogTitle>
+          <DialogTitle>{deleteTarget?.confirmTitle ?? `Xóa ${deleteTarget?.label}?`}</DialogTitle>
           <DialogDescription>Đơn và các món trong đơn sẽ bị xóa vĩnh viễn. Thao tác này không thể hoàn tác.</DialogDescription>
         </DialogHeader>
         {deleteError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{deleteError}</p>}
@@ -310,6 +353,81 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       </DialogContent>
     </Dialog>
   </main>;
+}
+
+
+type SwipeDirection = "left" | "right";
+
+function SwipeableOrderCard({ order, busy, onSwipe, children }: {
+  order: Order;
+  busy: boolean;
+  onSwipe: (order: Order, direction: SwipeDirection) => void;
+  children: ReactNode;
+}) {
+  const gesture = useRef<{ pointerId: number; startX: number; startY: number; dragging: boolean } | null>(null);
+  const distance = useRef(0);
+  const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [settling, setSettling] = useState(false);
+
+  useEffect(() => () => { if (resetTimer.current) clearTimeout(resetTimer.current); }, []);
+
+  function finish(activate: boolean) {
+    const dx = distance.current;
+    const valid = activate && Math.abs(dx) >= 78;
+    gesture.current = null;
+    distance.current = 0;
+    setSettling(true);
+    setOffset(valid ? Math.sign(dx) * 110 : 0);
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    resetTimer.current = setTimeout(() => {
+      setOffset(0);
+      if (valid) onSwipe(order, dx > 0 ? "right" : "left");
+      resetTimer.current = setTimeout(() => setSettling(false), reducedMotion ? 0 : 180);
+    }, reducedMotion ? 0 : 180);
+  }
+
+  function pointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (busy || settling || window.matchMedia("(min-width: 1280px)").matches) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if ((event.target as HTMLElement).closest("button, a, input, textarea, select, [role=checkbox]")) return;
+    gesture.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, dragging: false };
+    distance.current = 0;
+  }
+
+  function pointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const current = gesture.current;
+    if (!current || current.pointerId !== event.pointerId) return;
+    const dx = event.clientX - current.startX;
+    const dy = event.clientY - current.startY;
+    if (!current.dragging) {
+      if (Math.abs(dx) < 12 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
+      current.dragging = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    distance.current = dx;
+    setOffset(Math.max(-120, Math.min(120, dx * 0.8)));
+  }
+
+  function pointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (gesture.current?.pointerId !== event.pointerId) return;
+    finish(gesture.current.dragging);
+  }
+
+  const rightLabel = order.status === "new" ? "Đã làm" : order.status === "paid" ? "Xóa đơn" : "Thanh toán";
+  const leftLabel = order.status === "new" ? "Xóa đơn" : order.status === "paid" ? "Chưa thanh toán" : "Đơn mới";
+  const deleteAction = offset < 0 && order.status === "new" || offset > 0 && order.status === "paid";
+
+  return <div className="relative min-w-0 touch-pan-y xl:touch-auto" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { if (gesture.current) finish(false); }}>
+    {offset !== 0 && <div aria-hidden="true" className={`pointer-events-none absolute inset-0 flex items-center ${offset > 0 ? "justify-start pl-4" : "justify-end pr-4"} rounded-xl text-sm font-bold text-white xl:hidden ${deleteAction ? "bg-red-600" : "bg-[#258067]"}`}>
+      {offset > 0 ? rightLabel : leftLabel}
+    </div>}
+    <div className="relative origin-bottom bg-white" style={{
+      transform: `translate3d(${offset}px, 0, 0) rotate(${offset / 18}deg)`,
+      transition: settling ? "transform 180ms ease-out" : undefined,
+    }}>{children}</div>
+  </div>;
 }
 
 function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl border bg-white px-3 py-2.5"><p className="text-[10px] font-bold uppercase tracking-wide text-zinc-500">{label}</p><p className="mt-0.5 text-lg font-black leading-tight">{value}</p></div>; }
