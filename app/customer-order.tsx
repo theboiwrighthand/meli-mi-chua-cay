@@ -50,6 +50,7 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
   const [otherNote, setOtherNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("all");
   const [success, setSuccess] = useState<{ code: string; total: number } | null>(null);
   const [error, setError] = useState("");
 
@@ -82,6 +83,7 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
   }
 
   function scrollToGroup(id: string) {
+    setActiveCategory(id === "menu-list" ? "all" : id);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -178,7 +180,7 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
     <main className="min-h-screen bg-brand-cream text-brand-ink">
       <header className="meli-hero">
         <div className="meli-hero-photo" aria-hidden="true">
-          <Image src={itemPhotos.mains[0]} alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" />
+          <Image src={itemPhotos.mains[1]} alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" />
         </div>
         <div className="meli-hero-inner">
           <div className="meli-brand"><span aria-hidden="true">🍜</span><div><strong>Meli</strong><small>MÌ CHUA CAY</small></div></div>
@@ -190,9 +192,9 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
       <div className="meli-layout mx-auto grid max-w-[1320px] gap-6 px-4 pb-28 pt-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:pb-12">
         <section>
           <nav className="meli-tabs" aria-label="Danh mục món">
-            <button type="button" onClick={() => scrollToGroup("menu-list")} className="meli-tab meli-tab-active"><Flame size={16} /> Tất cả</button>
+            <button type="button" onClick={() => scrollToGroup("menu-list")} className={`meli-tab ${activeCategory === "all" ? "meli-tab-active" : ""}`}><Flame size={16} /> Tất cả</button>
             {groups.map((group) => (
-              <button key={group.id} type="button" className="meli-tab" onClick={() => scrollToGroup(group.id)}>
+              <button key={group.id} type="button" className={`meli-tab ${activeCategory === group.id ? "meli-tab-active" : ""}`} onClick={() => scrollToGroup(group.id)}>
                 {group.id === "drinks" ? <Coffee size={16} /> : <UtensilsCrossed size={16} />}{group.title}
               </button>
             ))}
@@ -220,7 +222,7 @@ export function CustomerOrder({ initialTableCode = "" }: { initialTableCode?: st
                           </div>
                           <div className="meli-food-content">
                             <h3>{item.name}</h3>
-                            <p>{item.description || "Món ngon tại MELI"}</p>
+                            <p>{item.description || (item.category === "drinks" ? "Giải khát" : "Món ngon tại MELI")}</p>
                             <div className="meli-food-bottom">
                               <strong>{formatMoney(item.price)}</strong>
                               {quantity > 0 ? (
