@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import "./iphone.css";
 
 export const metadata: Metadata = {
   title: "MELI · Quản lý đơn",
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#fff9f0",
+  viewportFit: "cover",
 };
 
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,0 +1,18 @@
+/* Mobile admin surfaces share one restrained corner scale. */
+@media (max-width: 639px) {
+  .meli-admin-page { min-height: 100dvh; background: #f8f9fa; }
+  .meli-admin-page > header { padding-top: env(safe-area-inset-top); }
+  .meli-admin-page [role="tablist"] { gap: 6px; }
+  .meli-admin-page [role="tablist"] [role="tab"] {
+    gap: 3px;
+    padding-inline: 6px;
+    border-radius: 10px;
+    font-size: clamp(10px, 2.65vw, 12px);
+  }
+  .meli-admin-page [role="tablist"] [role="tab"] > span:first-of-type { flex: 1; text-align: left; }
+  .meli-admin-page [role="tablist"] [role="tab"] > span:last-of-type { min-width: 21px; flex: none; padding-inline: 4px; }
+  .meli-admin-page .meli-admin-column { border-radius: 14px; }
+  .meli-admin-page .meli-admin-order-card { border-radius: 11px; }
+  .meli-admin-page .meli-admin-mobile-cta { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .meli-admin-page .meli-admin-mobile-cta button { border-radius: 10px; }
+}
