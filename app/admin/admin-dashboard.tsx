@@ -309,11 +309,6 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     </header>
     {statsOpen && <StatsDialog onOpenChange={setStatsOpen} />}
     <section className="meli-admin-shell mx-auto min-w-0 max-w-[1700px] px-4 py-4 sm:px-6 sm:py-6">
-      <div className="meli-admin-desktop-tabs mb-4 hidden items-end gap-2 border-b border-[#e1e3e5] xl:flex" aria-label="Tổng quan trạng thái đơn">
-        {columns.map((column, index) => <div key={column.id} className={`flex min-h-11 items-center gap-2 rounded-t-lg border border-b-0 px-5 text-sm font-semibold ${index === 0 ? "border-[#e1e3e5] bg-white text-[#a82d1e]" : "border-transparent bg-[#f1f2f3] text-[#454545]"}`}>
-          {column.title}<span className="rounded-full bg-[#e9e9ea] px-2 py-0.5 text-xs tabular-nums">{orders.filter((order) => column.statuses.some((status) => status === order.status)).length}</span>
-        </div>)}
-      </div>
       <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e1e3e5] bg-[#f6f6f7] px-4 py-3 xl:hidden">
         {columns.map((column) => {
           const Icon = column.icon;
@@ -362,19 +357,19 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         </div>
       </div>
       <div className="mb-3 min-w-0 px-1 xl:hidden">
-        <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-[#594b44]">
-          <Checkbox checked={mobileAllSelected} disabled={!mobileOrders.length || deleting || bulkUpdating} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? mobileOrders.map((order) => order.id) : current.filter((id) => !mobileOrders.some((order) => order.id === id)))} aria-label={`Chọn tất cả đơn ${columns.find((column) => column.id === mobileTab)?.title}`} />
-          <span>Chọn tất cả <span className="text-zinc-500">({mobileOrders.length})</span></span>
-          {selectedInTab.length > 0 && <span className="ml-auto rounded-full bg-[#fff0df] px-2 py-0.5 text-[11px] text-[#a82d1e]">Đã chọn {selectedInTab.length}</span>}
-        </label>
-        {selectedInTab.length > 0 && <div className="mt-2 flex flex-wrap gap-1.5">
-          {mobileTab === "new" && <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "cooking")}><ArrowRight className="size-3.5" /> Đã làm</Button>}
-          {mobileTab === "cooking" && <>
-            <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "new")}><ArrowLeft className="size-3.5" /> Đơn mới</Button>
-            <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "paid")}><ArrowRight className="size-3.5" /> Thanh toán</Button>
-          </>}
-          {mobileTab === "paid" && <Button variant="outline" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => { setBulkUnpayError(""); setBulkUnpayTarget([...selectedInTab]); }}><ArrowLeft className="size-3.5" /> Chưa thanh toán</Button>}
-          <Button variant="destructive" size="sm" className="h-9 rounded-lg px-2.5 text-xs" disabled={selectedBusy} onClick={() => requestDelete("bulk", selectedInTab, `${selectedInTab.length} đơn đã chọn`, mobileTab === "paid" ? "Xóa các đơn đã thanh toán này?" : undefined)}><Trash2 className="size-3.5" /> Xóa {selectedInTab.length} đơn</Button>
+        <div className="flex min-h-9 items-center justify-end gap-2">
+          {selectedInTab.length > 0 && <span className="mr-auto rounded-full bg-[#fff0df] px-2 py-0.5 text-[11px] text-[#a82d1e]">Đã chọn {selectedInTab.length}</span>}
+          <label className="ml-auto inline-flex cursor-pointer items-center gap-2 whitespace-nowrap text-xs font-semibold text-[#594b44]">
+            <Checkbox checked={mobileAllSelected} disabled={!mobileOrders.length || deleting || bulkUpdating} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? mobileOrders.map((order) => order.id) : current.filter((id) => !mobileOrders.some((order) => order.id === id)))} aria-label={`Chọn tất cả đơn ${columns.find((column) => column.id === mobileTab)?.title}`} />
+            <span>Chọn tất cả <span className="text-zinc-500">({mobileOrders.length})</span></span>
+          </label>
+        </div>
+        {selectedInTab.length > 0 && <div className={`mt-2 grid gap-1.5 ${mobileTab === "cooking" ? "grid-cols-3" : "grid-cols-2"}`}>
+          {mobileTab === "cooking" && <Button variant="outline" size="sm" className="h-10 min-w-0 gap-1 rounded-lg px-1 text-[11px] sm:text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "new")}><ArrowLeft className="size-3 shrink-0" /> Đơn mới</Button>}
+          <Button variant="destructive" size="sm" className="h-10 min-w-0 gap-1 rounded-lg px-1 text-[11px] sm:text-xs" disabled={selectedBusy} onClick={() => requestDelete("bulk", selectedInTab, `${selectedInTab.length} đơn đã chọn`, mobileTab === "paid" ? "Xóa các đơn đã thanh toán này?" : undefined)}><Trash2 className="size-3 shrink-0" /> Xóa ({selectedInTab.length})</Button>
+          {mobileTab === "new" && <Button variant="outline" size="sm" className="h-10 min-w-0 gap-1 rounded-lg px-1 text-[11px] sm:text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "cooking")}><ArrowRight className="size-3 shrink-0" /> Đã làm</Button>}
+          {mobileTab === "cooking" && <Button variant="outline" size="sm" className="h-10 min-w-0 gap-1 rounded-lg px-1 text-[11px] sm:text-xs" disabled={selectedBusy} onClick={() => void updateSelectedOrders(selectedInTab, "paid")}><ArrowRight className="size-3 shrink-0" /> Thanh toán</Button>}
+          {mobileTab === "paid" && <Button variant="outline" size="sm" className="h-10 min-w-0 gap-1 rounded-lg px-1 text-[11px] sm:text-xs" disabled={selectedBusy} onClick={() => { setBulkUnpayError(""); setBulkUnpayTarget([...selectedInTab]); }}><ArrowLeft className="size-3 shrink-0" /> Chưa thanh toán</Button>}
         </div>}
       </div>
       <div className="grid gap-4 xl:grid-cols-3">

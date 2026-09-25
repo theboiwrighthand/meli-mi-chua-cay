@@ -4,7 +4,7 @@ const mapSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3723.76886
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-[#723a2c] bg-[#2e1b17] text-[#fff7ec]">
+    <footer className="meli-site-footer border-t border-[#723a2c] bg-[#2e1b17] text-[#fff7ec]">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-12 lg:px-8">
         <div>
           <p className="text-2xl font-extrabold tracking-wide">MELI</p>

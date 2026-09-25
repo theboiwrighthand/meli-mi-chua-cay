@@ -68,6 +68,7 @@
 @media (min-width: 1280px) {
   .meli-admin-page .meli-admin-shell { margin-left: 214px; }
   .meli-admin-page section.meli-admin-shell { width: calc(100% - 214px); }
+  body:has(.meli-admin-page) > .meli-site-footer { margin-left: 214px; width: calc(100% - 214px); }
 }
 @media (max-width: 639px) {
   .meli-store-topbar-inner { height: 60px; padding: 0 1rem; }
