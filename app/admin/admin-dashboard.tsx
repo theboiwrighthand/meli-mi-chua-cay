@@ -4,7 +4,7 @@ import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as
 import dynamic from "next/dynamic";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { NavigationIconLink } from "@/components/navigation-icon-link";
-import { ArrowLeft, ArrowRight, BarChart3, BookOpen, Check, ChefHat, CircleCheck, ClipboardList, Clock3, CreditCard, Ellipsis, Eye, LoaderCircle, Pencil, Play, Plus, RefreshCw, Search, Store, Table2, Trash2, Truck, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, BookOpen, CalendarDays, Check, ChefHat, CircleCheck, ClipboardList, Clock3, CreditCard, Ellipsis, Eye, LoaderCircle, MapPin, Pencil, Play, Plus, RefreshCw, Search, Store, Table2, Trash2, Truck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -330,8 +330,30 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         })}
       </div>
       {error && <p className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}
-      <div className="meli-admin-filterbar mb-4 grid grid-cols-2 items-center gap-2 rounded-lg border border-[#e1e3e5] bg-white p-3 sm:flex sm:flex-wrap sm:gap-3">
-        <label className="relative col-span-2 min-w-0 sm:min-w-[180px] sm:flex-1">
+      <div className="mb-4 flex min-w-0 items-center gap-2 sm:hidden" role="group" aria-label="Tìm kiếm và lọc đơn hàng">
+        <label className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
+          <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm đơn, món..." aria-label="Tìm mã đơn, khách, bàn hoặc món" className="h-11 w-full rounded-[10px] border-[#e1e3e5] bg-white pl-9 text-sm" />
+        </label>
+        <DropdownMenuPrimitive.Root>
+          <DropdownMenuPrimitive.Trigger asChild><Button type="button" variant="outline" size="icon" className={`size-11 shrink-0 rounded-[10px] ${timeFilter !== "all" ? "border-[#b44b31] bg-[#fff8f3] text-[#a82d1e]" : "border-[#e1e3e5] bg-white text-[#57575e]"}`} aria-label={`Lọc thời gian: ${timeFilter === "today" ? "Hôm nay" : timeFilter === "week" ? "7 ngày qua" : "Mọi ngày"}`} title="Lọc theo thời gian"><CalendarDays className="size-5" aria-hidden="true" /></Button></DropdownMenuPrimitive.Trigger>
+          <DropdownMenuPrimitive.Portal><DropdownMenuPrimitive.Content align="end" sideOffset={8} className="z-50 min-w-44 rounded-lg border border-[#e1e3e5] bg-white p-1 text-sm shadow-lg outline-none">
+            <DropdownMenuPrimitive.RadioGroup value={timeFilter} onValueChange={(value) => { setTimeFilter(value as typeof timeFilter); setSelectedIds([]); }}>
+              {[["all", "Mọi ngày"], ["today", "Hôm nay"], ["week", "7 ngày qua"]].map(([value, label]) => <DropdownMenuPrimitive.RadioItem key={value} value={value} className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2.5 outline-none hover:bg-[#f6f6f7] focus:bg-[#f6f6f7] data-[state=checked]:font-semibold data-[state=checked]:text-[#a82d1e]">{label}<DropdownMenuPrimitive.ItemIndicator><Check className="size-4" /></DropdownMenuPrimitive.ItemIndicator></DropdownMenuPrimitive.RadioItem>)}
+            </DropdownMenuPrimitive.RadioGroup>
+          </DropdownMenuPrimitive.Content></DropdownMenuPrimitive.Portal>
+        </DropdownMenuPrimitive.Root>
+        <DropdownMenuPrimitive.Root>
+          <DropdownMenuPrimitive.Trigger asChild><Button type="button" variant="outline" size="icon" className={`size-11 shrink-0 rounded-[10px] ${areaFilter !== "all" ? "border-[#b44b31] bg-[#fff8f3] text-[#a82d1e]" : "border-[#e1e3e5] bg-white text-[#57575e]"}`} aria-label={`Lọc khu vực: ${areaFilter === "takeaway" ? "Mang về" : areaFilter === "dine_in" ? "Tại quán" : "Mọi khu vực"}`} title="Lọc theo khu vực"><MapPin className="size-5" aria-hidden="true" /></Button></DropdownMenuPrimitive.Trigger>
+          <DropdownMenuPrimitive.Portal><DropdownMenuPrimitive.Content align="end" sideOffset={8} className="z-50 min-w-44 rounded-lg border border-[#e1e3e5] bg-white p-1 text-sm shadow-lg outline-none">
+            <DropdownMenuPrimitive.RadioGroup value={areaFilter} onValueChange={(value) => { setAreaFilter(value as typeof areaFilter); setSelectedIds([]); }}>
+              {[["all", "Mọi khu vực"], ["dine_in", "Tại quán"], ["takeaway", "Mang về"]].map(([value, label]) => <DropdownMenuPrimitive.RadioItem key={value} value={value} className="flex cursor-pointer items-center justify-between rounded-md px-3 py-2.5 outline-none hover:bg-[#f6f6f7] focus:bg-[#f6f6f7] data-[state=checked]:font-semibold data-[state=checked]:text-[#a82d1e]">{label}<DropdownMenuPrimitive.ItemIndicator><Check className="size-4" /></DropdownMenuPrimitive.ItemIndicator></DropdownMenuPrimitive.RadioItem>)}
+            </DropdownMenuPrimitive.RadioGroup>
+          </DropdownMenuPrimitive.Content></DropdownMenuPrimitive.Portal>
+        </DropdownMenuPrimitive.Root>
+      </div>
+      <div className="meli-admin-filterbar mb-4 hidden flex-wrap items-center gap-3 rounded-lg border border-[#e1e3e5] bg-white p-3 sm:flex">
+        <label className="relative min-w-[180px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
           <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm đơn, khách, bàn, món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
         </label>
