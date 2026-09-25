@@ -330,18 +330,18 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         })}
       </div>
       {error && <p className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}
-      <div className="meli-admin-filterbar mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-[#e1e3e5] bg-white p-3">
-        <label className="relative min-w-[180px] flex-1">
+      <div className="meli-admin-filterbar mb-4 grid grid-cols-2 items-center gap-2 rounded-lg border border-[#e1e3e5] bg-white p-3 sm:flex sm:flex-wrap sm:gap-3">
+        <label className="relative col-span-2 min-w-0 sm:min-w-[180px] sm:flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
-          <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm mã đơn, tên khách, bàn hoặc món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
+          <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm đơn, khách, bàn, món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
         </label>
-        <label className="meli-admin-select relative flex min-w-[142px] flex-1 items-center sm:flex-none"><Table2 className="pointer-events-none absolute left-3 size-4 text-zinc-500" aria-hidden="true" />
+        <label className="meli-admin-select relative flex min-w-0 sm:min-w-[142px] sm:flex-none"><Table2 className="pointer-events-none absolute left-3 hidden size-4 text-zinc-500 sm:block" aria-hidden="true" />
           <span className="sr-only">Khu vực đơn</span>
-          <select value={areaFilter} onChange={(event) => { setAreaFilter(event.target.value as typeof areaFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-9 pr-7 text-sm text-[#303030]"><option value="all">Tất cả khu vực</option><option value="dine_in">Tại quán</option><option value="takeaway">Mang về</option></select>
+          <select value={areaFilter} onChange={(event) => { setAreaFilter(event.target.value as typeof areaFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-2.5 pr-6 text-[13px] text-[#303030] sm:pl-9 sm:pr-7 sm:text-sm"><option value="all">Mọi khu vực</option><option value="dine_in">Tại quán</option><option value="takeaway">Mang về</option></select>
         </label>
-        <label className="meli-admin-select relative flex min-w-[142px] flex-1 items-center sm:flex-none"><Clock3 className="pointer-events-none absolute left-3 size-4 text-zinc-500" aria-hidden="true" />
+        <label className="meli-admin-select relative flex min-w-0 sm:min-w-[142px] sm:flex-none"><Clock3 className="pointer-events-none absolute left-3 hidden size-4 text-zinc-500 sm:block" aria-hidden="true" />
           <span className="sr-only">Thời gian đặt đơn</span>
-          <select value={timeFilter} onChange={(event) => { setTimeFilter(event.target.value as typeof timeFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-9 pr-7 text-sm text-[#303030]"><option value="all">Tất cả thời gian</option><option value="today">Hôm nay</option><option value="week">7 ngày qua</option></select>
+          <select value={timeFilter} onChange={(event) => { setTimeFilter(event.target.value as typeof timeFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-2.5 pr-6 text-[13px] text-[#303030] sm:pl-9 sm:pr-7 sm:text-sm"><option value="all">Mọi ngày</option><option value="today">Hôm nay</option><option value="week">7 ngày qua</option></select>
         </label>
         <div className="hidden items-center gap-3 xl:flex">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
