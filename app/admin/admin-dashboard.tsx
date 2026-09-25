@@ -402,7 +402,8 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         {columns.map((column) => {
           const Icon = column.icon;
           const ActionIcon = column.actionIcon;
-          const list = orders.filter((order) => column.statuses.some((status) => status === order.status) && matchesFilters(order));
+          const list = orders.filter((order) => column.statuses.some((status) => status === order.status) && matchesFilters(order))
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() || a.id.localeCompare(b.id));
           return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`meli-admin-column meli-admin-column-${column.id} min-h-64 min-w-0 rounded-xl border border-[#e1e3e5] p-2 sm:p-3 ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
