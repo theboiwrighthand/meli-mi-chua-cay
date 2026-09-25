@@ -203,18 +203,21 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
   }
 
   return (
-    <main className="min-h-screen bg-brand-cream text-brand-ink">
+    <main className="meli-storefront min-h-screen bg-brand-cream text-brand-ink">
       <header className="meli-hero">
-        <div className="meli-hero-photo" aria-hidden="true">
-          <Image src="/noodle-hero.webp" alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" />
-        </div>
-        <div className="meli-hero-inner">
-          <div className="meli-brand"><Soup aria-hidden="true" className="size-8 text-[#ffdb9c]" /><div><strong>Meli</strong><small>MÌ CHUA CAY</small></div></div>
-          <div className="meli-hero-copy"><span>Hương vị thân quen · Nghĩa Tân</span><h1>Ăn là mê,<br /><em>Mì là Meli.</em></h1><p>Chọn món ngon, quán làm ngay.</p></div>
-          <div className="meli-hero-actions">
-            {tableCode.trim() && !isTakeaway && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
-            {isAdmin && <NavigationIconLink href="/admin" className="meli-admin-link" label="Mở trang quản lý đơn"><LayoutDashboard className="size-5" /></NavigationIconLink>}
+        <div className="meli-store-topbar">
+          <div className="meli-store-topbar-inner">
+            <div className="meli-brand"><span className="meli-brand-mark"><Soup aria-hidden="true" className="size-5" /></span><div><strong>MELI</strong><small>MÌ CHUA CAY</small></div></div>
+            <span className="meli-store-address">106-C4 Nghĩa Tân · Cầu Giấy</span>
+            <div className="meli-hero-actions">
+              {tableCode.trim() && !isTakeaway && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
+              {isAdmin && <NavigationIconLink href="/admin" className="meli-admin-link" label="Mở trang quản lý đơn"><LayoutDashboard className="size-5" /></NavigationIconLink>}
+            </div>
           </div>
+        </div>
+        <div className="meli-hero-banner">
+          <div className="meli-hero-photo" aria-hidden="true"><Image src="/noodle-hero.webp" alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" /></div>
+          <div className="meli-hero-inner"><div className="meli-hero-copy"><span>Thực đơn MELI</span><h1>Mì chua cay, đúng vị bạn thích.</h1><p>Chọn món ngon, quán làm ngay.</p></div></div>
         </div>
       </header>
 

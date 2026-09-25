@@ -268,16 +268,23 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     setMobileTab(status);
   }
 
-  return <main className="min-h-screen overflow-x-clip bg-[#fff7eb] text-[#2e201c]">
-    <header className="border-b border-[#e9d7c5] bg-[#fffaf2]">
+  return <main className="meli-admin-page min-h-screen overflow-x-clip bg-[#f6f6f7] text-[#303030]">
+    <aside className="meli-admin-sidebar hidden xl:flex" aria-label="Điều hướng quản lý">
+      <div className="meli-admin-sidebar-brand"><span className="meli-admin-sidebar-mark"><Store className="size-5" /></span><span>MELI<small>Quản lý quán</small></span></div>
+      <div className="meli-admin-sidebar-section">QUẢN LÝ</div>
+      <div className="meli-admin-sidebar-active"><Clock3 className="size-4" /> Đơn hàng</div>
+      <NavigationIconLink href="/" className="meli-admin-sidebar-link" label="Mở menu khách"><Store className="size-4" /><span>Menu khách</span></NavigationIconLink>
+      <div className="meli-admin-sidebar-bottom">Xin chào, {ownerName}</div>
+    </aside>
+    <header className="meli-admin-shell border-b border-[#e1e3e5] bg-white">
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          <NavigationIconLink href="/" className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm transition-colors hover:bg-[#9e281c] sm:size-11" label="Về menu đặt món"><Store className="size-5" /></NavigationIconLink>
-          <div className="min-w-0"><h1 className="truncate text-base font-black sm:text-lg">MELI · Quản lý đơn</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">Xin chào, {ownerName}</p></div>
+          <NavigationIconLink href="/" className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#a82d1e] text-white transition-colors hover:bg-[#89291d] xl:hidden" label="Về menu đặt món"><Store className="size-5" /></NavigationIconLink>
+          <div className="min-w-0"><h1 className="truncate text-base font-bold sm:text-lg xl:text-xl">Đơn hàng</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">MELI · Xin chào, {ownerName}</p></div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-          <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#ead8c8] bg-white text-[#a62f21] hover:bg-[#fff0df] sm:size-11" onClick={() => setStatsOpen(true)} aria-label="Xem thống kê" title="Xem thống kê"><BarChart3 className="size-5" /></Button>
-          <Button variant="ghost" size="icon" className="size-9 rounded-lg bg-[#e7ece8] hover:bg-[#dce3de] sm:size-11" onClick={() => load()} aria-label="Làm mới"><RefreshCw className="size-4" /></Button>
+          <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#e1e3e5] bg-white text-[#303030] hover:bg-[#f6f6f7] sm:size-10" onClick={() => setStatsOpen(true)} aria-label="Xem thống kê" title="Xem thống kê"><BarChart3 className="size-5" /></Button>
+          <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#e1e3e5] bg-white hover:bg-[#f6f6f7] sm:size-10" onClick={() => load()} aria-label="Làm mới"><RefreshCw className="size-4" /></Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="h-9 rounded-lg bg-[#b92717] px-2.5 text-xs font-bold hover:bg-[#9e281c] sm:h-11 sm:px-4 sm:text-sm"><Plus className="size-4" /> Tạo đơn</Button></DialogTrigger>
             <CreateOrderDialog menu={menu} onCreated={() => { setOpen(false); load(true); }} />
@@ -286,8 +293,8 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       </div>
     </header>
     {statsOpen && <StatsDialog onOpenChange={setStatsOpen} />}
-    <section className="mx-auto min-w-0 max-w-[1500px] px-4 py-4 sm:py-6">
-      <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e9d7c5] bg-[#fff7eb] px-4 py-3 xl:hidden">
+    <section className="meli-admin-shell mx-auto min-w-0 max-w-[1700px] px-4 py-4 sm:px-6 sm:py-6">
+      <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e1e3e5] bg-[#f6f6f7] px-4 py-3 xl:hidden">
         {columns.map((column) => {
           const Icon = column.icon;
           const count = orders.filter((order) => column.statuses.some((status) => status === order.status)).length;
@@ -341,7 +348,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           const Icon = column.icon;
           const ActionIcon = column.actionIcon;
           const list = orders.filter((order) => column.statuses.some((status) => status === order.status));
-          return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-2xl bg-[#eaede8] p-2 sm:p-3 xl:rounded-3xl ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
+          return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-xl border border-[#e1e3e5] bg-[#f1f2f3] p-2 sm:p-3 ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
               <OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop />
@@ -353,7 +360,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
                 <SwipeableOrderCard key={order.id} order={order} busy={updatingIds.includes(order.id) || deleting} loading={updatingIds.includes(order.id) || (deleting && deleteTarget?.ids.includes(order.id) === true)} onSwipe={handleSwipe}>
-                <article className="min-w-0 overflow-hidden rounded-xl border border-[#c83220] bg-white shadow-sm">
+                <article className="min-w-0 overflow-hidden rounded-lg border border-[#d9dcdf] bg-white shadow-sm">
                   <div className="p-3 sm:p-4">
                     <div className="flex min-w-0 items-start justify-between gap-2">
                       <div className="flex min-w-0 items-start gap-2.5">
@@ -374,7 +381,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                         {column.next && <Button size="sm" className="h-9 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.action}</>}</Button>}
                       </div>
                     </div>
-                    <div className="mt-3 border-y py-1">{order.items.map((item) =>
+                    <div className="mt-3 border-y border-[#e1e3e5] py-1">{order.items.map((item) =>
                       <div key={item.id} className="flex min-w-0 items-center justify-between gap-2 py-2.5 text-sm">
                         <span className="min-w-0 break-words"><b className="mr-1.5 text-[#b92717]">{item.quantity}×</b>{item.itemName}{item.notes?.trim() && <span className="ml-1 text-[.78em] font-normal text-zinc-500">({item.notes.trim()})</span>}</span>
                         <span className="shrink-0 font-medium">{formatMoney(item.price * item.quantity)}</span>
@@ -382,7 +389,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                     )}</div>
                     {order.note && <p className="mt-2 break-words rounded bg-[#f5f0ed] px-2.5 py-2 text-xs italic text-[#9e281c]"><b>Ghi chú:</b> {order.note}</p>}
                   </div>
-                  <div className="flex min-w-0 items-center gap-1.5 border-t bg-[#fffdf9] px-3 py-2.5 sm:px-4">
+                  <div className="flex min-w-0 items-center gap-1.5 border-t border-[#e1e3e5] bg-[#fbfbfb] px-3 py-2.5 sm:px-4">
                     <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-600" title={order.customerName?.trim() || "Chưa cung cấp"}>Khách: <span className="font-medium text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
                     <div className="flex shrink-0 items-center gap-0.5">
                       {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} className="text-[#a82d1e] hover:bg-[#fff0df]" onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
