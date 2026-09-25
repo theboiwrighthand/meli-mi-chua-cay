@@ -1,8 +1,9 @@
 "use client";
 
 import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { NavigationIconLink } from "@/components/navigation-icon-link";
-import { ArrowLeft, ArrowRight, Check, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, Check, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,6 +21,7 @@ const columns = [
 const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
 type OrderStatus = (typeof columns)[number]["id"];
 type CountEffect = { change: number; sequence: number };
+const StatsDialog = dynamic(() => import("./stats-dialog").then((module) => module.StatsDialog), { ssr: false });
 
 function parseOrderNote(note: string) {
   const parts = note.split(",").map((part) => part.trim()).filter(Boolean);
@@ -56,6 +58,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<OrderStatus>("new");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string; confirmTitle?: string } | null>(null);
@@ -252,8 +255,6 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     }
   }
 
-  const activeCount = orders.filter((order) => !["paid", "cancelled"].includes(order.status)).length;
-  const todayRevenue = orders.filter((order) => order.status === "paid").reduce((sum, order) => sum + order.total, 0);
   const visibleOrders = orders.filter((order) => columns.some((column) => column.statuses.some((status) => status === order.status)));
   const allSelected = visibleOrders.length > 0 && visibleOrders.every((order) => selectedIds.includes(order.id));
   const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status));
@@ -269,20 +270,22 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
 
   return <main className="min-h-screen overflow-x-clip bg-[#fff7eb] text-[#2e201c]">
     <header className="border-b border-[#e9d7c5] bg-[#fffaf2]">
-      <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-3 px-4 py-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <NavigationIconLink href="/" className="grid size-11 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm transition-colors hover:bg-[#9e281c]" label="Về menu đặt món"><Store className="size-5" /></NavigationIconLink>
+      <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          <NavigationIconLink href="/" className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#b92717] text-white shadow-sm transition-colors hover:bg-[#9e281c] sm:size-11" label="Về menu đặt món"><Store className="size-5" /></NavigationIconLink>
           <div className="min-w-0"><h1 className="truncate text-base font-black sm:text-lg">MELI · Quản lý đơn</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">Xin chào, {ownerName}</p></div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button variant="ghost" size="icon" className="size-11 rounded-lg bg-[#e7ece8] hover:bg-[#dce3de]" onClick={() => load()} aria-label="Làm mới"><RefreshCw className="size-4" /></Button>
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <Button variant="outline" size="icon" className="size-9 rounded-lg border-[#ead8c8] bg-white text-[#a62f21] hover:bg-[#fff0df] sm:size-11" onClick={() => setStatsOpen(true)} aria-label="Xem thống kê" title="Xem thống kê"><BarChart3 className="size-5" /></Button>
+          <Button variant="ghost" size="icon" className="size-9 rounded-lg bg-[#e7ece8] hover:bg-[#dce3de] sm:size-11" onClick={() => load()} aria-label="Làm mới"><RefreshCw className="size-4" /></Button>
           <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="h-11 rounded-lg bg-[#b92717] px-3.5 font-bold hover:bg-[#9e281c] sm:px-4"><Plus className="size-4" /> Tạo đơn</Button></DialogTrigger>
+            <DialogTrigger asChild><Button className="h-9 rounded-lg bg-[#b92717] px-2.5 text-xs font-bold hover:bg-[#9e281c] sm:h-11 sm:px-4 sm:text-sm"><Plus className="size-4" /> Tạo đơn</Button></DialogTrigger>
             <CreateOrderDialog menu={menu} onCreated={() => { setOpen(false); load(true); }} />
           </Dialog>
         </div>
       </div>
     </header>
+    {statsOpen && <StatsDialog onOpenChange={setStatsOpen} />}
     <section className="mx-auto min-w-0 max-w-[1500px] px-4 py-4 sm:py-6">
       <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e9d7c5] bg-[#fff7eb] px-4 py-3 xl:hidden">
         {columns.map((column) => {
@@ -303,11 +306,6 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden="true" /><span className="min-w-0 truncate">{column.title}</span><OrderCountBadge count={count} effect={countEffects[column.id]} active={mobileTab === column.id} />
           </button>;
         })}
-      </div>
-      <div className="mb-3 grid grid-cols-3 divide-x divide-[#ead8c8] rounded-xl border border-[#ead8c8] bg-white p-2 xl:mb-4 xl:gap-3 xl:divide-x-0 xl:border-0 xl:bg-transparent xl:p-0">
-        <Stat label="Đơn chưa thanh toán" shortLabel="Chưa thanh toán" value={`${activeCount}`} />
-        <Stat label="Đã thanh toán" shortLabel="Đã thanh toán" value={`${orders.filter((o) => o.status === "paid").length} đơn`} mobileValue={`${orders.filter((o) => o.status === "paid").length}`} />
-        <Stat label="Doanh thu ghi nhận" shortLabel="Doanh thu" value={formatMoney(todayRevenue)} />
       </div>
       {error && <p className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}
       <div className="mb-4 hidden flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3 xl:flex">
@@ -564,14 +562,6 @@ function OrderCountBadge({ count, effect, active = false, desktop = false }: {
     </span>}
   </span>;
 }
-
-function Stat({ label, shortLabel, value, mobileValue }: { label: string; shortLabel: string; value: string; mobileValue?: string }) {
-  return <div className="min-w-0 px-2 py-1 xl:rounded-xl xl:border xl:bg-white xl:px-3 xl:py-2.5">
-    <p className="truncate text-[10px] font-semibold text-zinc-500 xl:font-bold xl:uppercase xl:tracking-wide"><span className="xl:hidden">{shortLabel}</span><span className="hidden xl:inline">{label}</span></p>
-    <p className={`mt-0.5 min-w-0 font-black leading-tight tabular-nums xl:text-lg ${shortLabel === "Doanh thu" ? "text-[clamp(12px,3.4vw,16px)] [overflow-wrap:anywhere]" : "text-base"}`} title={value}><span className="xl:hidden">{mobileValue ?? value}</span><span className="hidden xl:inline">{value}</span></p>
-  </div>;
-}
-
 
 type EditLine = {
   key: string;
