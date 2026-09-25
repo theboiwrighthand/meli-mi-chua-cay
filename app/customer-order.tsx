@@ -43,7 +43,8 @@ const itemPhotos: Record<string, string> = {
   "sua-dau": "https://png.pngtree.com/png-clipart/20211024/original/pngtree-soy-milk-food-health-food-bean-cup-transparent-png-image_6869242.png",
   "pepsi-chai": "https://product.hstatic.net/200000885783/product/29_ada679fb97d941f38dfb733cc0aea6eb_1024x1024.png",
   "sting-chai": "https://cdnv2.tgdd.vn/bhx-static/bhx/Products/Images/3226/76520/bhx/nuoc-tang-luc-sting-dau-pet-330ml_202509291516185862.jpg",  "cam-twister": "",
-  "sting-lon": "https://www.lottemart.vn/media/catalog/product/8/9/8934588192227.jpg",
+  "sting-lon": "https://cdn.tgdd.vn/Products/Images/3226/76519/bhx/nuoc-tang-luc-sting-sleek-huong-dau-320ml-202111061723498584.jpg",
+  "cam-twister": "https://www.lottemart.vn/media/catalog/product/8/9/8934588192227.jpg",
   "pepsi-lon": "https://cdn.tgdd.vn/Products/Images/2443/76467/bhx/nuoc-ngot-pepsi-cola-lon-320ml-202407131656260952.jpg",
 
 };
