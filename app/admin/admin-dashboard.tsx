@@ -2,8 +2,9 @@
 
 import { type CSSProperties, type Dispatch, type FormEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { NavigationIconLink } from "@/components/navigation-icon-link";
-import { ArrowLeft, ArrowRight, BarChart3, Check, ChefHat, CircleDollarSign, Clock3, LoaderCircle, Pencil, Plus, RefreshCw, Search, Store, Trash2, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, BarChart3, BookOpen, Check, ChefHat, CircleCheck, ClipboardList, Clock3, CreditCard, Ellipsis, Eye, LoaderCircle, Pencil, Play, Plus, RefreshCw, Search, Store, Table2, Trash2, Truck, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -14,9 +15,9 @@ import { formatMoney, type MenuItem } from "@/lib/menu";
 type OrderItem = { id: number; menuItemId: string | null; itemName: string; price: number; quantity: number; notes: string };
 type Order = { id: string; code: string; tableCode: string | null; orderType: string; source: string; status: string; customerName: string; note: string; total: number; paymentStatus: string; createdAt: string; items: OrderItem[] };
 const columns = [
-  { id: "new", statuses: ["new"], title: "Đơn mới", icon: Clock3, actionIcon: ChefHat, action: "Hoàn thành", next: "cooking" },
-  { id: "cooking", statuses: ["cooking", "served"], title: "Đã làm", icon: ChefHat, actionIcon: CircleDollarSign, action: "Thanh toán", next: "paid" },
-  { id: "paid", statuses: ["paid"], title: "Đã thanh toán", icon: CircleDollarSign, actionIcon: CircleDollarSign, action: "", next: "" },
+  { id: "new", statuses: ["new"], title: "Đơn mới", icon: Clock3, actionIcon: Play, action: "Bắt đầu làm", next: "cooking" },
+  { id: "cooking", statuses: ["cooking", "served"], title: "Đã làm", icon: ChefHat, actionIcon: CreditCard, action: "Thanh toán", next: "paid" },
+  { id: "paid", statuses: ["paid"], title: "Đã thanh toán", icon: CircleCheck, actionIcon: CircleCheck, action: "", next: "" },
 ] as const;
 const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
 type OrderStatus = (typeof columns)[number]["id"];
@@ -61,6 +62,9 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [statsOpen, setStatsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<OrderStatus>("new");
   const [search, setSearch] = useState("");
+  const [areaFilter, setAreaFilter] = useState<"all" | "dine_in" | "takeaway">("all");
+  const [timeFilter, setTimeFilter] = useState<"all" | "today" | "week">("all");
+  const [now, setNow] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string; confirmTitle?: string } | null>(null);
   const [deleteError, setDeleteError] = useState("");
@@ -72,6 +76,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [bulkUnpayError, setBulkUnpayError] = useState("");
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [editTarget, setEditTarget] = useState<Order | null>(null);
+  const [detailsTarget, setDetailsTarget] = useState<Order | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const updatingIdsRef = useRef(new Set<string>());
   const knownOrderIdsRef = useRef<Set<string> | null>(null);
@@ -106,6 +111,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         && nextOrders.some((order) => order.status === "new" && !knownOrderIdsRef.current?.has(order.id));
 
       knownOrderIdsRef.current = availableIds;
+      setNow(Date.now());
       setOrders(nextOrders);
       setSelectedIds((current) => current.filter((id) => availableIds.has(id)));
       if (hasNewOrder
@@ -258,9 +264,15 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
 
   const query = search.trim().toLocaleLowerCase("vi");
   const matchesSearch = (order: Order) => !query || [order.code, order.customerName, order.tableCode ?? "", ...order.items.map((item) => item.itemName)].some((value) => value.toLocaleLowerCase("vi").includes(query));
-  const visibleOrders = orders.filter((order) => columns.some((column) => column.statuses.some((status) => status === order.status)) && matchesSearch(order));
+  const todayInVietnam = now ? formatOrderTime(new Date(now).toISOString()).split(" ")[0] : "";
+  const matchesFilters = (order: Order) => matchesSearch(order)
+    && (areaFilter === "all" || (areaFilter === "takeaway" ? order.orderType === "takeaway" : order.orderType !== "takeaway"))
+    && (timeFilter === "all" || (timeFilter === "today"
+      ? formatOrderTime(order.createdAt).startsWith(todayInVietnam)
+      : new Date(order.createdAt).getTime() >= now - 7 * 24 * 60 * 60 * 1000));
+  const visibleOrders = orders.filter((order) => columns.some((column) => column.statuses.some((status) => status === order.status)) && matchesFilters(order));
   const allSelected = visibleOrders.length > 0 && visibleOrders.every((order) => selectedIds.includes(order.id));
-  const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status) && matchesSearch(order));
+  const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status) && matchesFilters(order));
   const mobileAllSelected = mobileOrders.length > 0 && mobileOrders.every((order) => selectedIds.includes(order.id));
   const selectedInTab = mobileOrders.filter((order) => selectedIds.includes(order.id)).map((order) => order.id);
   const selectedBusy = bulkUpdating || deleting || selectedInTab.some((id) => updatingIds.includes(id));
@@ -273,16 +285,16 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
 
   return <main className="meli-admin-page min-h-screen overflow-x-clip bg-[#f6f6f7] text-[#303030]">
     <aside className="meli-admin-sidebar hidden xl:flex" aria-label="Điều hướng quản lý">
-      <div className="meli-admin-sidebar-brand"><span className="meli-admin-sidebar-mark"><Store className="size-5" /></span><span>MELI<small>Quản lý quán</small></span></div>
+      <div className="meli-admin-sidebar-brand"><span className="meli-admin-sidebar-mark"><ClipboardList className="size-5" /></span><span>MELI<small>Quản lý quán</small></span></div>
       <div className="meli-admin-sidebar-section">QUẢN LÝ</div>
-      <div className="meli-admin-sidebar-active"><Clock3 className="size-4" /> Đơn hàng</div>
-      <NavigationIconLink href="/" className="meli-admin-sidebar-link" label="Mở menu khách"><Store className="size-4" /><span>Menu khách</span></NavigationIconLink>
+      <div className="meli-admin-sidebar-active"><ClipboardList className="size-4" /> Đơn hàng</div>
+      <NavigationIconLink href="/" className="meli-admin-sidebar-link" label="Mở menu khách"><BookOpen className="size-4" /><span>Menu khách</span></NavigationIconLink>
       <div className="meli-admin-sidebar-bottom">Xin chào, {ownerName}</div>
     </aside>
     <header className="meli-admin-shell border-b border-[#e1e3e5] bg-white">
       <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          <NavigationIconLink href="/" className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#a82d1e] text-white transition-colors hover:bg-[#89291d] xl:hidden" label="Về menu đặt món"><Store className="size-5" /></NavigationIconLink>
+          <NavigationIconLink href="/" className="grid size-10 shrink-0 place-items-center rounded-lg bg-[#a82d1e] text-white transition-colors hover:bg-[#89291d] xl:hidden" label="Về menu đặt món"><ClipboardList className="size-5" /></NavigationIconLink>
           <div className="min-w-0"><h1 className="truncate text-base font-bold sm:text-lg xl:text-xl">Đơn hàng</h1><p className="truncate text-xs text-zinc-500 sm:text-sm">MELI · Xin chào, {ownerName}</p></div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -328,6 +340,14 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
           <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm mã đơn, tên khách, bàn hoặc món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
         </label>
+        <label className="meli-admin-select relative flex min-w-[142px] flex-1 items-center sm:flex-none"><Table2 className="pointer-events-none absolute left-3 size-4 text-zinc-500" aria-hidden="true" />
+          <span className="sr-only">Khu vực đơn</span>
+          <select value={areaFilter} onChange={(event) => { setAreaFilter(event.target.value as typeof areaFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-9 pr-7 text-sm text-[#303030]"><option value="all">Tất cả khu vực</option><option value="dine_in">Tại quán</option><option value="takeaway">Mang về</option></select>
+        </label>
+        <label className="meli-admin-select relative flex min-w-[142px] flex-1 items-center sm:flex-none"><Clock3 className="pointer-events-none absolute left-3 size-4 text-zinc-500" aria-hidden="true" />
+          <span className="sr-only">Thời gian đặt đơn</span>
+          <select value={timeFilter} onChange={(event) => { setTimeFilter(event.target.value as typeof timeFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-9 pr-7 text-sm text-[#303030]"><option value="all">Tất cả thời gian</option><option value="today">Hôm nay</option><option value="week">7 ngày qua</option></select>
+        </label>
         <div className="hidden items-center gap-3 xl:flex">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
           <Checkbox checked={allSelected} disabled={!visibleOrders.length || deleting || bulkUpdating} onCheckedChange={(checked) => setSelectedIds(checked === true ? visibleOrders.map((order) => order.id) : [])} aria-label="Chọn tất cả đơn" />
@@ -361,7 +381,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         {columns.map((column) => {
           const Icon = column.icon;
           const ActionIcon = column.actionIcon;
-          const list = orders.filter((order) => column.statuses.some((status) => status === order.status) && matchesSearch(order));
+          const list = orders.filter((order) => column.statuses.some((status) => status === order.status) && matchesFilters(order));
           return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`meli-admin-column meli-admin-column-${column.id} min-h-64 min-w-0 rounded-xl border border-[#e1e3e5] p-2 sm:p-3 ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
@@ -379,14 +399,27 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                     <div className="flex min-w-0 items-start gap-2">
                       <Checkbox className="mt-0.5 size-4 shrink-0 border-[#a82d1e] data-[state=checked]:border-[#a82d1e] data-[state=checked]:bg-[#a82d1e]" checked={selectedIds.includes(order.id)} disabled={bulkUpdating || deleting} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                          <h3 className="min-w-0 break-all text-sm font-bold leading-tight">{order.code}</h3>
-                          <time dateTime={order.createdAt} title="Giờ Việt Nam" className="shrink-0 text-[11px] tabular-nums text-[#616161]">{formatOrderTime(order.createdAt)}</time>
+                        <div className="flex items-start justify-between gap-1">
+                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                            <h3 className="min-w-0 break-all text-sm font-bold leading-tight">{order.code}</h3>
+                            <time dateTime={order.createdAt} title="Giờ Việt Nam" className="shrink-0 text-[11px] tabular-nums text-[#616161]">{formatOrderTime(order.createdAt)}</time>
+                          </div>
+                          <DropdownMenuPrimitive.Root>
+                            <DropdownMenuPrimitive.Trigger asChild><Button variant="ghost" size="icon-sm" className="-mr-1 -mt-1 shrink-0 text-[#454545]" disabled={updatingIds.includes(order.id) || deleting} aria-label={`Tùy chọn đơn ${order.code}`} title="Tùy chọn đơn"><Ellipsis className="size-5" /></Button></DropdownMenuPrimitive.Trigger>
+                            <DropdownMenuPrimitive.Portal>
+                              <DropdownMenuPrimitive.Content align="end" sideOffset={5} className="z-50 min-w-40 rounded-lg border border-[#e1e3e5] bg-white p-1 text-sm shadow-lg outline-none">
+                                <DropdownMenuPrimitive.Item onSelect={() => setDetailsTarget(order)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none hover:bg-[#f6f6f7] focus:bg-[#f6f6f7]"><Eye className="size-4" /> Xem chi tiết</DropdownMenuPrimitive.Item>
+                                {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <DropdownMenuPrimitive.Item onSelect={() => setEditTarget(order)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 outline-none hover:bg-[#f6f6f7] focus:bg-[#f6f6f7]"><Pencil className="size-4" /> Sửa đơn</DropdownMenuPrimitive.Item>}
+                                <DropdownMenuPrimitive.Separator className="my-1 h-px bg-[#e1e3e5]" />
+                                <DropdownMenuPrimitive.Item onSelect={() => requestDelete("single", [order.id], `đơn ${order.code}`, order.status === "paid" ? "Xóa đơn đã thanh toán này" : undefined)} className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-[#b42318] outline-none hover:bg-[#fff0ee] focus:bg-[#fff0ee]"><Trash2 className="size-4" /> Xóa đơn</DropdownMenuPrimitive.Item>
+                              </DropdownMenuPrimitive.Content>
+                            </DropdownMenuPrimitive.Portal>
+                          </DropdownMenuPrimitive.Root>
                         </div>
-                        <p className="mt-1.5 min-w-0 break-words text-xs text-[#454545]">
-                          <span className="font-medium">{order.customerName?.trim() || (order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt")}</span>
-                          <span className="mx-2 text-[#9a9a9a]">·</span>
-                          {order.orderType === "takeaway" ? "Mang về" : order.tableCode ? `Bàn ${order.tableCode}` : "Dùng tại chỗ"}
+                        <p className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 break-words text-xs text-[#454545]">
+                          <span className="inline-flex items-center gap-1"><UserRound className="size-3.5 shrink-0" aria-hidden="true" />{order.customerName?.trim() || (order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt")}</span>
+                          <span className="text-[#9a9a9a]">·</span>
+                          <span className="inline-flex items-center gap-1">{order.orderType === "takeaway" ? <Truck className="size-3.5 shrink-0" aria-hidden="true" /> : <Table2 className="size-3.5 shrink-0" aria-hidden="true" />}{order.orderType === "takeaway" ? "Mang về" : order.tableCode ? `Bàn ${order.tableCode}` : "Dùng tại chỗ"}</span>
                         </p>
                       </div>
                     </div>
@@ -402,11 +435,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
                       <span className={`inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium ${column.id === "new" ? "bg-[#fff0ee] text-[#a82d1e]" : column.id === "cooking" ? "bg-[#fff5df] text-[#956112]" : "bg-[#e7f7ed] text-[#16734a]"}`}>
                         <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />{column.title}
                       </span>
-                      <div className="flex min-w-0 shrink-0 items-center gap-1">
-                        {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
-                        <Button variant="ghost" size="icon-sm" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
-                        {column.next && <Button size="sm" className="ml-1 h-9 rounded-md bg-[#a82d1e] px-2.5 text-xs font-semibold hover:bg-[#89291d]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.id === "new" ? "Bắt đầu làm" : column.action}</>}</Button>}
-                      </div>
+                      {column.next && <Button size="sm" className="h-9 shrink-0 rounded-md bg-[#a82d1e] px-2.5 text-xs font-semibold hover:bg-[#89291d]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.action}</>}</Button>}
                     </div>
                   </div>
                 </article>
@@ -417,6 +446,28 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         })}
       </div>
     </section>
+    <div className="meli-admin-mobile-cta fixed inset-x-0 bottom-0 z-30 border-t border-[#e1e3e5] bg-white px-4 pb-[calc(.75rem+env(safe-area-inset-bottom))] pt-3 sm:hidden">
+      <Button onClick={() => setOpen(true)} className="h-11 w-full rounded-md bg-[#a82d1e] font-semibold hover:bg-[#89291d]"><Plus className="size-4" /> Tạo đơn mới</Button>
+    </div>
+    <Dialog open={detailsTarget !== null} onOpenChange={(next) => { if (!next) setDetailsTarget(null); }}>
+      {detailsTarget && <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] overflow-y-auto sm:max-w-lg">
+        <DialogHeader className="pr-8 text-left">
+          <DialogTitle>Chi tiết đơn {detailsTarget.code}</DialogTitle>
+          <DialogDescription>Đặt lúc {formatOrderTime(detailsTarget.createdAt)} · {detailsTarget.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 text-sm">
+          <div className="grid grid-cols-2 gap-3 rounded-lg bg-[#f6f6f7] p-3">
+            <div><p className="text-xs text-zinc-500">Khách</p><p className="font-semibold">{detailsTarget.customerName?.trim() || "Chưa cung cấp"}</p></div>
+            <div><p className="text-xs text-zinc-500">Hình thức</p><p className="font-semibold">{detailsTarget.orderType === "takeaway" ? "Mang về" : detailsTarget.tableCode ? `Bàn ${detailsTarget.tableCode}` : "Dùng tại chỗ"}</p></div>
+            <div><p className="text-xs text-zinc-500">Trạng thái</p><p className="font-semibold">{columns.find((column) => column.statuses.some((status) => status === detailsTarget.status))?.title ?? detailsTarget.status}</p></div>
+            <div><p className="text-xs text-zinc-500">Thanh toán</p><p className="font-semibold">{detailsTarget.paymentStatus === "paid" ? "Đã thanh toán" : "Chưa thanh toán"}</p></div>
+          </div>
+          <div><h3 className="mb-2 font-semibold">Các món đã chọn</h3><ul className="divide-y border-y border-[#e1e3e5]">{detailsTarget.items.map((item) => <li key={item.id} className="flex items-start justify-between gap-3 py-2.5"><span className="min-w-0">{item.quantity}× {item.itemName}{item.notes?.trim() && <small className="ml-1 text-zinc-500">({item.notes.trim()})</small>}</span><strong className="shrink-0 tabular-nums">{formatMoney(item.price * item.quantity)}</strong></li>)}</ul></div>
+          {detailsTarget.note && <p className="rounded-lg bg-[#fff5eb] p-3"><strong>Ghi chú:</strong> {detailsTarget.note}</p>}
+          <div className="flex justify-between border-t pt-3 text-base"><span>Tổng cộng</span><strong className="tabular-nums text-[#a82d1e]">{formatMoney(detailsTarget.total)}</strong></div>
+        </div>
+      </DialogContent>}
+    </Dialog>
     <Dialog open={editTarget !== null} onOpenChange={(next) => { if (!next && !savingEdit) setEditTarget(null); }}>
       {editTarget && <EditOrderDialog order={editTarget} menu={menu} onSavingChange={setSavingEdit} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); void load(true); }} />}
     </Dialog>

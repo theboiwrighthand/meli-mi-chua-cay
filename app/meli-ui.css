@@ -6,19 +6,20 @@
 .meli-store-topbar-inner { display: flex; max-width: 1320px; height: 68px; margin: auto; align-items: center; gap: 1.25rem; padding: 0 1.5rem; }
 .meli-storefront .meli-brand { align-self: center; gap: .65rem; }
 .meli-brand-mark, .meli-admin-sidebar-mark { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 9px; background: #a82d1e; color: white; }
-.meli-storefront .meli-brand strong { font-size: 1.25rem; letter-spacing: -.04em; }
+.meli-storefront .meli-brand strong { font-size: 1.55rem; letter-spacing: -.04em; color: #a82d1e; }
 .meli-storefront .meli-brand small { margin-top: .1rem; font-size: .55rem; letter-spacing: .14em; color: #616161; }
-.meli-store-address { margin-left: auto; font-size: .82rem; color: #616161; }
+.meli-store-address { display: inline-flex; align-items: center; gap: .35rem; margin-left: auto; font-size: .82rem; color: #616161; }
 .meli-storefront .meli-hero-actions { position: static; align-self: center; }
 .meli-storefront .meli-table-badge, .meli-storefront .meli-admin-link { border-color: #e1e3e5; background: #fff; color: #303030; }
-.meli-storefront .meli-hero-banner { position: relative; min-height: 170px; overflow: hidden; background: linear-gradient(90deg, #fcf8f5 0%, #fcf8f5 53%, #f7eee5 100%); }
-.meli-storefront .meli-hero-inner { min-height: 170px; padding: 1.5rem; }
-.meli-storefront .meli-hero-photo { inset: 0 0 0 auto; width: min(46%, 590px); mask-image: linear-gradient(to right, transparent 0%, #000 38%); }
-.meli-storefront .meli-hero-photo img { object-position: center 48%; }
+.meli-storefront .meli-hero-banner { position: relative; min-height: 240px; overflow: hidden; background: radial-gradient(circle at 62% 18%, #cc5632 0, transparent 32%), linear-gradient(105deg, #9e281c 0%, #b83722 62%, #751c16 100%); }
+.meli-storefront .meli-hero-banner::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18; background-image: radial-gradient(circle, #ffe1a7 1px, transparent 1px); background-size: 26px 26px; mask-image: linear-gradient(to right, #000, transparent 82%); }
+.meli-storefront .meli-hero-inner { z-index: 1; min-height: 240px; padding: 1.5rem; }
+.meli-storefront .meli-hero-photo { inset: 0 0 0 auto; width: min(42%, 590px); mask-image: linear-gradient(to right, transparent 0%, #000 38%); }
+.meli-storefront .meli-hero-photo img { object-position: 73% 50%; }
 .meli-storefront .meli-hero-copy { position: relative; top: auto; left: auto; width: min(54%, 580px); max-width: none; margin: 0; }
-.meli-storefront .meli-hero-copy > span { color: #a82d1e; letter-spacing: .08em; }
-.meli-storefront .meli-hero-copy h1 { margin-top: .25rem; color: #303030; font-size: clamp(1.6rem, 3vw, 2.45rem); line-height: 1.2; }
-.meli-storefront .meli-hero-copy p { margin-top: .5rem; color: #616161; font-size: .92rem; }
+.meli-storefront .meli-hero-copy > span { color: #ffdbb3; letter-spacing: .12em; }
+.meli-storefront .meli-hero-copy h1 { margin-top: .4rem; color: #fff7ee; font-size: clamp(2rem, 3.6vw, 3.25rem); line-height: 1.16; }
+.meli-storefront .meli-hero-copy p { margin-top: .65rem; color: #ffe5ce; font-size: .95rem; }
 .meli-storefront .meli-layout { max-width: 1320px; }
 .meli-storefront .meli-tabs { padding-bottom: .85rem; border-color: #e1e3e5; }
 .meli-storefront .meli-tab { min-height: 38px; border-radius: 8px; color: #454545; }
@@ -61,6 +62,8 @@
 .meli-admin-page .meli-admin-column-paid h2 { color: #166b46; }
 .meli-admin-page .meli-admin-order-card { box-shadow: 0 1px 3px #0000000d; }
 .meli-admin-page .meli-admin-order-card button:not(:disabled) { touch-action: manipulation; }
+.meli-admin-page .meli-admin-select select { background-image: none; }
+.meli-admin-page .meli-admin-select::after { content: "⌄"; pointer-events: none; position: absolute; right: .65rem; top: 50%; transform: translateY(-56%); color: #616161; font-size: 1rem; }
 .meli-admin-page .order-count-up, .meli-admin-page .order-count-down { color: #a82d1e; }
 @media (min-width: 1280px) {
   .meli-admin-page .meli-admin-shell { margin-left: 214px; }
@@ -68,16 +71,17 @@
 }
 @media (max-width: 639px) {
   .meli-store-topbar-inner { height: 60px; padding: 0 1rem; }
-  .meli-store-address { overflow: hidden; max-width: 40%; white-space: nowrap; text-overflow: ellipsis; font-size: .72rem; }
-  .meli-storefront .meli-hero-banner, .meli-storefront .meli-hero-inner { min-height: 144px; }
+  .meli-store-address { overflow: hidden; max-width: 47%; white-space: nowrap; text-overflow: ellipsis; font-size: .72rem; }
+  .meli-storefront .meli-hero-banner, .meli-storefront .meli-hero-inner { min-height: 180px; }
   .meli-storefront .meli-hero-inner { display: flex; padding: 1rem; }
-  .meli-storefront .meli-hero-photo { width: 51%; inset: 0 0 0 auto; }
-  .meli-storefront .meli-hero-copy { width: 60%; margin: 0; }
+  .meli-storefront .meli-hero-photo { width: 56%; inset: 0 -10% 0 auto; }
+  .meli-storefront .meli-hero-copy { width: 65%; margin: 0; }
   .meli-storefront .meli-hero-copy > span { display: block; font-size: .62rem; }
-  .meli-storefront .meli-hero-copy h1 { font-size: clamp(1.25rem, 5vw, 1.75rem); }
+  .meli-storefront .meli-hero-copy h1 { font-size: clamp(1.5rem, 5.7vw, 1.95rem); }
   .meli-storefront .meli-hero-copy p { font-size: .7rem; }
   .meli-storefront .meli-food-content { min-height: 138px; padding: .65rem; }
   .meli-storefront .meli-food-image { height: 120px; }
   .meli-admin-page .meli-admin-filterbar { margin-top: .25rem; }
   .meli-admin-page .meli-admin-order-card { font-size: .9rem; }
+  .meli-admin-page section.meli-admin-shell { padding-bottom: calc(6rem + env(safe-area-inset-bottom)); }
 }

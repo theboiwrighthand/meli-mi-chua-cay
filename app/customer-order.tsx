@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { Check, ChevronRight, Coffee, Flame, LayoutDashboard, Minus, Plus, ReceiptText, ShoppingBag, UtensilsCrossed, Soup, Truck, CookingPot } from "lucide-react";
+import { Check, ChevronRight, Coffee, LayoutDashboard, MapPin, Minus, Plus, ReceiptText, ShoppingCart, UtensilsCrossed, Soup, Truck, CookingPot } from "lucide-react";
 import Image from "next/image";
 import { NavigationIconLink } from "@/components/navigation-icon-link";
 import { Button } from "@/components/ui/button";
@@ -161,6 +161,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
     submitting,
     change,
     updateLine,
+    clearCart: () => setCart({}),
     setTableCode,
     setIsTakeaway: (next: boolean) => {
       setIsTakeaway(next);
@@ -207,8 +208,8 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
       <header className="meli-hero">
         <div className="meli-store-topbar">
           <div className="meli-store-topbar-inner">
-            <div className="meli-brand"><span className="meli-brand-mark"><Soup aria-hidden="true" className="size-5" /></span><div><strong>MELI</strong><small>MÌ CHUA CAY</small></div></div>
-            <span className="meli-store-address">106-C4 Nghĩa Tân · Cầu Giấy</span>
+            <div className="meli-brand"><div><strong>MELI</strong><small>MÌ CHUA CAY</small></div></div>
+            <span className="meli-store-address"><MapPin className="size-4 shrink-0" aria-hidden="true" />106-C4 Nghĩa Tân · Cầu Giấy</span>
             <div className="meli-hero-actions">
               {tableCode.trim() && !isTakeaway && <span className="meli-table-badge">Bàn {tableCode.trim()}</span>}
               {isAdmin && <NavigationIconLink href="/admin" className="meli-admin-link" label="Mở trang quản lý đơn"><LayoutDashboard className="size-5" /></NavigationIconLink>}
@@ -216,18 +217,18 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
           </div>
         </div>
         <div className="meli-hero-banner">
-          <div className="meli-hero-photo" aria-hidden="true"><Image src={itemPhotos["mi-tim-cat"]} alt="" fill priority unoptimized sizes="(max-width: 640px) 60vw, 520px" className="object-cover" /></div>
-          <div className="meli-hero-inner"><div className="meli-hero-copy"><span>ĐẬM VỊ HÀ NỘI</span><h1>Mì chua cay MELI</h1><p>Chua cay vừa miệng, topping đầy đặn, ngon mỗi ngày.</p></div></div>
+          <div className="meli-hero-photo" aria-hidden="true"><Image src="/noodle-hero.webp" alt="" fill priority sizes="(max-width: 640px) 60vw, 520px" className="object-cover" /></div>
+          <div className="meli-hero-inner"><div className="meli-hero-copy"><span>THỰC ĐƠN MELI</span><h1>Mì chua cay, đúng vị bạn thích.</h1><p>Chọn món ngon, quán làm ngay.</p></div></div>
         </div>
       </header>
 
       <div className="meli-layout mx-auto grid max-w-[1320px] gap-6 px-4 pb-28 pt-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:pb-12">
         <section>
           <nav className="meli-tabs" aria-label="Danh mục món">
-            <button type="button" onClick={() => scrollToGroup("menu-list")} className={`meli-tab ${activeCategory === "all" ? "meli-tab-active" : ""}`}><Flame size={16} /> Tất cả</button>
+            <button type="button" onClick={() => scrollToGroup("menu-list")} className={`meli-tab ${activeCategory === "all" ? "meli-tab-active" : ""}`}>Tất cả</button>
             {groups.map((group) => (
               <button key={group.id} type="button" className={`meli-tab ${activeCategory === group.id ? "meli-tab-active" : ""}`} onClick={() => scrollToGroup(group.id)}>
-                {group.id === "drinks" ? <Coffee size={16} /> : group.id === "mains" ? <Soup size={16} /> : <CookingPot size={16} />}{group.title}
+                {group.title}
               </button>
             ))}
           </nav>
@@ -289,7 +290,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
             className="mx-auto flex h-14 w-full max-w-lg items-center rounded-xl bg-brand-green px-4 text-left text-white shadow-lg"
             onClick={() => setCartOpen(true)}
           >
-            <ShoppingBag className="mr-3 size-5" />
+            <ShoppingCart className="mr-3 size-5" />
             <span className="min-w-0 flex-1">
               <span className="block text-xs text-white/70">{itemCount} món</span>
               <strong>{formatMoney(total)}</strong>
@@ -365,6 +366,7 @@ type CartFormProps = {
   submitting: boolean;
   change: (item: MenuItem, delta: number) => void;
   updateLine: (id: string, patch: Partial<Pick<CartLine, "notes" | "otherNote">>) => void;
+  clearCart: () => void;
   setTableCode: (value: string) => void;
   setIsTakeaway: (value: boolean) => void;
   setCustomerName: (value: string) => void;
@@ -387,6 +389,7 @@ function CartForm({
   submitting,
   change,
   updateLine,
+  clearCart,
   setTableCode,
   setIsTakeaway,
   setCustomerName,
@@ -407,9 +410,12 @@ function CartForm({
         {showHeader && (
           <div className="mb-4 flex items-center gap-2">
             <ReceiptText className="size-5 text-brand-green" />
-            <h2 className="text-xl font-extrabold">Đơn của bạn</h2>
+            <h2 className="flex-1 text-xl font-extrabold">Đơn của bạn</h2>
+            {lines.length > 0 && <button type="button" disabled={submitting} onClick={clearCart} className="text-xs font-semibold text-[#a82d1e] hover:underline">Xóa tất cả</button>}
           </div>
         )}
+
+        {mobile && lines.length > 0 && <div className="mb-2 flex justify-end"><button type="button" disabled={submitting} onClick={clearCart} className="text-xs font-semibold text-[#a82d1e] hover:underline">Xóa tất cả</button></div>}
 
         {!lines.length ? (
           <div className="rounded-xl border border-dashed border-brand-green/20 bg-brand-cream p-7 text-center text-sm text-brand-muted">
