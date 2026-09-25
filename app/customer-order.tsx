@@ -46,7 +46,8 @@ const itemPhotos: Record<string, string> = {
   "sting-lon": "https://cdn.tgdd.vn/Products/Images/3226/76519/bhx/nuoc-tang-luc-sting-sleek-huong-dau-320ml-202111061723498584.jpg",
   "cam-twister": "https://www.lottemart.vn/media/catalog/product/8/9/8934588192227.jpg",
   "pepsi-lon": "https://cdn.tgdd.vn/Products/Images/2443/76467/bhx/nuoc-ngot-pepsi-cola-lon-320ml-202407131656260952.jpg",
-  "rau-them": "https://cdn.eva.vn/upload/2-2022/images/2022-05-05/gia-do-xao-rau-nay-vua-re-tien-de-lam-lai-tot-cho-suc-khoe-trang-duong-ngon-hon-thit-8-1651703559-570-width780height585.jpeg"
+  "rau-them": "https://cdn.eva.vn/upload/2-2022/images/2022-05-05/gia-do-xao-rau-nay-vua-re-tien-de-lam-lai-tot-cho-suc-khoe-trang-duong-ngon-hon-thit-8-1651703559-570-width780height585.jpeg",
+  "moc-them": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSaMRRW_AK2Q12MqVLZ7spp29e5PJE7KX0qzsgW3lkDug&s=10",
 
 };
 
