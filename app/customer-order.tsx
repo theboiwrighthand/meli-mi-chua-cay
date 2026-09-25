@@ -205,7 +205,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
 
   return (
     <main className="meli-storefront min-h-screen bg-brand-cream text-brand-ink">
-      <header className="meli-hero">
+
         <div className="meli-store-topbar">
           <div className="meli-store-topbar-inner">
             <div className="meli-brand"><div><strong>MELI</strong><small>MÌ CHUA CAY</small></div></div>
@@ -216,6 +216,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
             </div>
           </div>
         </div>
+      <header className="meli-hero">
         <div className="meli-hero-banner">
           <div className="meli-hero-photo" aria-hidden="true"><Image src="/noodle-hero.webp" alt="" fill priority sizes="(max-width: 640px) 60vw, 520px" className="object-cover" /></div>
           <div className="meli-hero-inner"><div className="meli-hero-copy"><h1>Mì chua cay, đúng vị bạn thích.</h1><p>Chọn món ngon, quán làm ngay.</p></div></div>

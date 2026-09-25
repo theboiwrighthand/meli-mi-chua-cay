@@ -4,4 +4,18 @@
 
   .meli-store-topbar-inner { height: 52px; }
   .meli-admin-page > header > div { padding-top: 8px; padding-bottom: 8px; }
+  .meli-storefront .meli-store-topbar,
+  .meli-admin-page > header {
+    position: sticky;
+    top: env(safe-area-inset-top);
+    z-index: 40;
+    background: #fff;
+  }
+  .meli-admin-page [role="tablist"] {
+    top: calc(env(safe-area-inset-top) + 57px);
+  }
+  .meli-storefront #menu-list,
+  .meli-storefront #menu-list > section {
+    scroll-margin-top: calc(env(safe-area-inset-top) + 72px);
+  }
 }
