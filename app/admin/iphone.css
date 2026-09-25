@@ -1,7 +1,6 @@
 /* Mobile admin surfaces share one restrained corner scale. */
 @media (max-width: 639px) {
   .meli-admin-page { min-height: 100dvh; background: #f8f9fa; }
-  .meli-admin-page > header { padding-top: env(safe-area-inset-top); }
   .meli-admin-page [role="tablist"] { gap: 6px; }
   .meli-admin-page [role="tablist"] [role="tab"] {
     gap: 3px;
