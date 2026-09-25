@@ -357,7 +357,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
           <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm đơn, khách, bàn, món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
         </label>
-        <label className="meli-admin-select relative flex min-w-0 sm:min-w-[142px] sm:flex-none"><Table2 className="pointer-events-none absolute left-3 hidden size-4 text-zinc-500 sm:block" aria-hidden="true" />
+        <label className="meli-admin-select relative flex min-w-0 sm:min-w-[142px] sm:flex-none"><MapPin className="pointer-events-none absolute left-3 hidden size-4 text-zinc-500 sm:block" aria-hidden="true" />
           <span className="sr-only">Khu vực đơn</span>
           <select value={areaFilter} onChange={(event) => { setAreaFilter(event.target.value as typeof areaFilter); setSelectedIds([]); }} className="h-10 w-full appearance-none rounded-md border border-[#e1e3e5] bg-white pl-2.5 pr-6 text-[13px] text-[#303030] sm:pl-9 sm:pr-7 sm:text-sm"><option value="all">Mọi khu vực</option><option value="dine_in">Tại quán</option><option value="takeaway">Mang về</option></select>
         </label>

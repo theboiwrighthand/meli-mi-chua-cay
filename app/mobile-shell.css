@@ -5,8 +5,3 @@
   .meli-store-topbar-inner { height: 52px; }
   .meli-admin-page > header > div { padding-top: 8px; padding-bottom: 8px; }
 }
-
-/* The sidebar leaves too little space for three order columns at 1280px. */
-@media (min-width: 1280px) and (max-width: 1599px) {
-  .meli-admin-page section.meli-admin-shell > .grid.gap-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
