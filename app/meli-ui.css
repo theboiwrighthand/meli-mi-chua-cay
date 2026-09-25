@@ -72,7 +72,7 @@ body:has(main.meli-admin-page) > .meli-site-footer { display: none; }
 }
 @media (max-width: 639px) {
   .meli-store-topbar-inner { height: 60px; padding: 0 1rem; }
-  .meli-store-address { overflow: hidden; max-width: 47%; white-space: nowrap; text-overflow: ellipsis; font-size: .72rem; }
+  .meli-store-address { overflow: hidden; max-width: 50%; white-space: nowrap; text-overflow: ellipsis; font-size: .72rem; }
   .meli-storefront .meli-hero-banner, .meli-storefront .meli-hero-inner { min-height: 180px; }
   .meli-storefront .meli-hero-inner { display: flex; padding: 1rem; }
   .meli-storefront .meli-hero-photo { width: 56%; inset: 0 -10% 0 auto; }
