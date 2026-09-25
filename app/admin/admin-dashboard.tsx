@@ -19,7 +19,7 @@ const columns = [
   { id: "cooking", statuses: ["cooking", "served"], title: "Đã làm", icon: ChefHat, actionIcon: CreditCard, action: "Thanh toán", next: "paid" },
   { id: "paid", statuses: ["paid"], title: "Đã thanh toán", icon: CircleCheck, actionIcon: CircleCheck, action: "", next: "" },
 ] as const;
-const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
+const quickNotes = ["Không hành", "Không giá đỗ", "Không rau", "Giảm cay"];
 type OrderStatus = (typeof columns)[number]["id"];
 type CountEffect = { change: number; sequence: number };
 const StatsDialog = dynamic(() => import("./stats-dialog").then((module) => module.StatsDialog), { ssr: false });
@@ -783,7 +783,7 @@ function EditOrderDialog({
             <details className="mt-2 text-sm">
               <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{line.notes.length || line.otherNote ? " · Đã chọn" : ""}</summary>
               <fieldset disabled={saving} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${line.name}`}>
-                {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-sm">
+                {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-xs">
                   <Checkbox checked={line.notes.includes(note)} onCheckedChange={(checked) => setLines((current) => current.map((entry) => entry.key === line.key ? { ...entry, notes: checked ? [...entry.notes, note] : entry.notes.filter((value) => value !== note) } : entry))} />{note}
                 </label>)}
               </fieldset>
@@ -955,7 +955,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
           {quantity > 0 && <details className="mt-2 text-sm">
             <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{(itemNotes[item.id]?.length || itemOtherNotes[item.id]) ? " · Đã chọn" : ""}</summary>
             <fieldset disabled={saving} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${item.name}`}>
-              {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-sm">
+              {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-xs">
                 <Checkbox checked={(itemNotes[item.id] ?? []).includes(note)} onCheckedChange={(checked) => setItemNotes((current) => ({ ...current, [item.id]: checked ? [...(current[item.id] ?? []), note] : (current[item.id] ?? []).filter((value) => value !== note) }))} />{note}
               </label>)}
             </fieldset>

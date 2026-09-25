@@ -25,7 +25,7 @@ const groups: Array<{ id: MenuItem["category"]; title: string }> = [
   { id: "drinks", title: "Đồ uống" },
 ];
 
-const quickNotes = ["Giảm cay","Không hành", "Không giá đỗ", "Không rau"];
+const quickNotes = ["Không hành", "Không giá đỗ", "Không rau", "Giảm cay"];
 const maxQuantity = 20;
 
 // Only attach a photo when it really depicts the product; the rest use a category illustration.
@@ -437,7 +437,7 @@ function CartForm({
                 <details className="mt-2 text-xs">
                   <summary className="cursor-pointer font-semibold text-brand-green">Ghi chú riêng cho {line.name}{line.notes.length || line.otherNote ? " · Đã chọn" : ""}</summary>
                   <fieldset disabled={submitting} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${line.name}`}>
-                    {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-brand-green/15 bg-white px-2 text-sm">
+                    {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-brand-green/15 bg-white px-2 text-xs">
                       <Checkbox checked={line.notes.includes(note)} onCheckedChange={(checked) => updateLine(line.id, { notes: checked ? [...line.notes, note] : line.notes.filter((value) => value !== note) })} />{note}
                     </label>)}
                   </fieldset>
