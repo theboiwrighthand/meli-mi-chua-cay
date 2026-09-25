@@ -780,7 +780,7 @@ function EditOrderDialog({
               <Button type="button" size="icon-sm" variant="outline" disabled={saving || line.quantity >= 20} onClick={() => changeQuantity(line.key, 1)} aria-label={`Thêm ${line.name}`}>+</Button>
               <Button type="button" size="icon-sm" variant="ghost" disabled={saving} onClick={() => setLines((current) => current.filter((entry) => entry.key !== line.key))} aria-label={`Bỏ ${line.name}`} className="text-red-700"><Trash2 className="size-4" /></Button>
             </div>
-            <details className="mt-2 text-sm">
+            <details className="mt-2 text-xs">
               <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{line.notes.length || line.otherNote ? " · Đã chọn" : ""}</summary>
               <fieldset disabled={saving} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${line.name}`}>
                 {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-xs">
@@ -911,8 +911,8 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
       <section aria-label="Thông tin đơn" className="space-y-3 rounded-xl border border-[#edddce] bg-white p-3 sm:p-4">
         <h3 className="text-sm font-bold text-[#47372f]">Hình thức dùng món</h3>
         <div role="group" aria-label="Hình thức dùng món" className="grid grid-cols-2 gap-2">
-          <button type="button" aria-pressed={!isTakeaway} disabled={saving} onClick={() => setIsTakeaway(false)} className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-2 text-sm font-bold transition-colors ${!isTakeaway ? "border-[#a82d1e] bg-[#fff0e7] text-[#8e2b1c] ring-1 ring-[#a82d1e]" : "border-[#e8d6c7] bg-white text-[#69564d] hover:bg-[#fff7f0]"}`}><Store aria-hidden="true" className="size-5 shrink-0" />Ăn tại quán</button>
-          <button type="button" aria-pressed={isTakeaway} disabled={saving} onClick={() => { setIsTakeaway(true); setTableCode(""); }} className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-2 text-sm font-bold transition-colors ${isTakeaway ? "border-[#a82d1e] bg-[#fff0e7] text-[#8e2b1c] ring-1 ring-[#a82d1e]" : "border-[#e8d6c7] bg-white text-[#69564d] hover:bg-[#fff7f0]"}`}><Truck aria-hidden="true" className="size-5 shrink-0" />Mang về</button>
+          <button type="button" aria-pressed={!isTakeaway} disabled={saving} onClick={() => setIsTakeaway(false)} className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-2 text-xs font-bold transition-colors ${!isTakeaway ? "border-[#a82d1e] bg-[#fff0e7] text-[#8e2b1c] ring-1 ring-[#a82d1e]" : "border-[#e8d6c7] bg-white text-[#69564d] hover:bg-[#fff7f0]"}`}><Store aria-hidden="true" className="size-5 shrink-0" />Ăn tại quán</button>
+          <button type="button" aria-pressed={isTakeaway} disabled={saving} onClick={() => { setIsTakeaway(true); setTableCode(""); }} className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-2 text-xs font-bold transition-colors ${isTakeaway ? "border-[#a82d1e] bg-[#fff0e7] text-[#8e2b1c] ring-1 ring-[#a82d1e]" : "border-[#e8d6c7] bg-white text-[#69564d] hover:bg-[#fff7f0]"}`}><Truck aria-hidden="true" className="size-5 shrink-0" />Mang về</button>
         </div>
         {!isTakeaway && <label className="block text-sm font-semibold text-[#47372f]">Số bàn <span className="font-normal text-zinc-500">(tuỳ chọn)</span>
           <Input className="mt-1.5 h-11 bg-white" value={tableCode} maxLength={20} disabled={saving} onChange={(event) => setTableCode(event.target.value)} placeholder="Ví dụ: 3" />
@@ -952,7 +952,7 @@ function CreateOrderDialog({ onCreated, menu }: { onCreated: () => void; menu: M
             <b className="w-5 text-center">{quantity}</b>
             <Button type="button" variant="outline" size="icon-sm" className="size-10 shrink-0 border-[#a82d1e] text-[#a82d1e] sm:size-9" disabled={saving || quantity >= 20} onClick={() => setCart((current) => ({ ...current, [item.id]: Math.min(20, (current[item.id] ?? 0) + 1) }))} aria-label={`Thêm ${item.name}`}>+</Button>
           </div>
-          {quantity > 0 && <details className="mt-2 text-sm">
+          {quantity > 0 && <details className="mt-2 text-xs">
             <summary className="cursor-pointer font-semibold text-[#a82d1e]">Ghi chú riêng{(itemNotes[item.id]?.length || itemOtherNotes[item.id]) ? " · Đã chọn" : ""}</summary>
             <fieldset disabled={saving} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${item.name}`}>
               {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white px-2 text-xs">

@@ -489,7 +489,7 @@ function CartForm({
                 return (
                   <label
                     key={note}
-                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-sm font-medium ${
+                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-3 text-xs font-medium ${
                       selected
                         ? "border-brand-green bg-brand-green-soft text-brand-green"
                         : "border-brand-green/15 bg-white"
