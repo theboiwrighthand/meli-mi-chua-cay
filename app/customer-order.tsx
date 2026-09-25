@@ -283,7 +283,7 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
       </div>
 
       {itemCount > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-brand-green/10 bg-[#fff9f0] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:hidden">
+        <div className="meli-mobile-cart-bar fixed inset-x-0 bottom-0 z-40 border-t border-brand-green/10 bg-[#fff9f0] px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 lg:hidden">
           <button
             type="button"
             className="mx-auto flex h-14 w-full max-w-lg items-center rounded-xl bg-brand-green px-4 text-left text-white shadow-lg"

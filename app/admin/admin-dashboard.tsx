@@ -326,7 +326,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
       <div className="meli-admin-filterbar mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-[#e1e3e5] bg-white p-3">
         <label className="relative min-w-[180px] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
-          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm mã đơn, tên khách, bàn hoặc món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
+          <Input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedIds([]); }} placeholder="Tìm mã đơn, tên khách, bàn hoặc món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
         </label>
         <div className="hidden items-center gap-3 xl:flex">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
