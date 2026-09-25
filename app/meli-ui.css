@@ -65,10 +65,10 @@
 .meli-admin-page .meli-admin-select select { background-image: none; }
 .meli-admin-page .meli-admin-select::after { content: "⌄"; pointer-events: none; position: absolute; right: .65rem; top: 50%; transform: translateY(-56%); color: #616161; font-size: 1rem; }
 .meli-admin-page .order-count-up, .meli-admin-page .order-count-down { color: #a82d1e; }
+body:has(main.meli-admin-page) > .meli-site-footer { display: none; }
 @media (min-width: 1280px) {
   .meli-admin-page .meli-admin-shell { margin-left: 214px; }
   .meli-admin-page section.meli-admin-shell { width: calc(100% - 214px); }
-  body:has(.meli-admin-page) > .meli-site-footer { margin-left: 214px; width: calc(100% - 214px); }
 }
 @media (max-width: 639px) {
   .meli-store-topbar-inner { height: 60px; padding: 0 1rem; }
