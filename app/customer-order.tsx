@@ -434,7 +434,7 @@ function CartForm({
                   </div>
                   <QuantityControl item={line} quantity={line.quantity} disabled={submitting} change={change} />
                 </div>
-                <details className="mt-2 text-sm">
+                <details className="mt-2 text-xs">
                   <summary className="cursor-pointer font-semibold text-brand-green">Ghi chú riêng cho {line.name}{line.notes.length || line.otherNote ? " · Đã chọn" : ""}</summary>
                   <fieldset disabled={submitting} className="mt-2 flex flex-wrap gap-2" aria-label={`Yêu cầu riêng cho ${line.name}`}>
                     {quickNotes.map((note) => <label key={note} className="flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-brand-green/15 bg-white px-2 text-sm">
@@ -449,23 +449,23 @@ function CartForm({
         )}
 
         <div className="mt-5 space-y-4">
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold">
-              Số bàn
+          <div>
+            <label className="block text-sm font-semibold">Số bàn</label>
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-3">
               <Input
                 value={tableCode}
                 onChange={(event) => setTableCode(event.target.value)}
                 placeholder={isTakeaway ? "Không áp dụng khi mang về" : "Có thể để trống"}
                 maxLength={20}
                 disabled={submitting || isTakeaway}
-                className="mt-2 h-11 rounded-xl border-brand-green/15 bg-white"
+                className="h-11 min-w-0 rounded-xl border-brand-green/15 bg-white"
               />
-            </label>
-            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-brand-green/15 bg-white px-3 text-sm font-semibold">
-              <Checkbox checked={isTakeaway} disabled={submitting} onCheckedChange={(checked) => setIsTakeaway(checked === true)} />
-              <Truck aria-hidden="true" className="size-5 text-[#13978b]" />
-              Mang về
-            </label>
+              <label className="flex h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap rounded-xl border border-brand-green/15 bg-white px-3 text-sm font-semibold">
+                <Checkbox checked={isTakeaway} disabled={submitting} onCheckedChange={(checked) => setIsTakeaway(checked === true)} />
+                <Truck aria-hidden="true" className="size-5 shrink-0 text-[#13978b]" />
+                <span>Mang về</span>
+              </label>
+            </div>
           </div>
 
           <label className="block text-sm font-semibold">
