@@ -25,4 +25,6 @@ Kiểm tra trang khách `/` và trang quản lý `/admin`; tạo một đơn th�
 
 ## Xác thực
 
-Supabase Auth lưu session trong cookie qua `@supabase/ssr`. `proxy.ts` làm mới session; mọi thao tác quản lý kiểm tra user ở server và chỉ chấp nhận email `ADMIN_EMAIL`.
+Supabase Auth lưu session trong cookie qua `@supabase/ssr`. `proxy.ts` làm mới session; mọi thao tác quản lý kiểm tra user ở server và cho phép email `ADMIN_EMAIL` hoặc email đã được quản trị viên cấp trong `public.admin_users`.
+
+Để thêm tên đăng nhập `admin` mà không gửi email xác nhận: trong Supabase Auth → Users, tạo user với email nội bộ `admin@meli.invalid`, đặt mật khẩu mạnh riêng và chọn xác nhận email ngay khi tạo. Sau khi tạo user thành công, thêm email đó vào `public.admin_users` bằng quyền quản trị cơ sở dữ liệu. Giao diện `/login` chấp nhận `admin` và chuyển tên đó thành email nội bộ trước khi gọi Supabase Auth. Không thêm email vào `admin_users` trước khi tài khoản Auth đã được tạo và kiểm tra; không dùng mật khẩu phổ biến như `admin` cho tài khoản quản trị công khai.
