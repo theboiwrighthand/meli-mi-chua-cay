@@ -324,7 +324,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             const next = columns[nextIndex].id;
             selectMobileTab(next);
             document.getElementById(`order-tab-${next}`)?.focus();
-          }} className={`flex min-w-0 items-center justify-between gap-1 rounded-lg border px-2 py-2.5 text-xs font-bold sm:justify-start sm:gap-2 sm:px-3 sm:text-sm ${column.id === "new" && newOrderSignal > 0 ? "animate-new-order" : ""} ${mobileTab === column.id ? "border-[#a82d1e] bg-white text-[#a82d1e]" : "border-[#e1e3e5] bg-[#f6f6f7] text-[#303030]"}`}>
+          }} className={`flex min-w-0 items-center justify-between gap-1 rounded-lg border px-2 py-2.5 text-xs font-bold sm:justify-start sm:gap-2 sm:px-3 sm:text-sm ${column.id === "new" && newOrderSignal > 0 ? "animate-new-order" : ""} ${mobileTab === column.id ? {
+            new: "border-[#d8a6a0] bg-[#fff5f4] text-[#a82d1e]",
+            cooking: "border-[#dbc797] bg-[#fffaee] text-[#955c0d]",
+            paid: "border-[#a9d6bd] bg-[#effaf4] text-[#166b46]",
+          }[column.id] : "border-[#e1e3e5] bg-[#f6f6f7] text-[#303030]"}`}>
             <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden="true" /><span className="min-w-0 truncate">{column.title}</span><OrderCountBadge count={count} effect={countEffects[column.id]} active={mobileTab === column.id} />
           </button>;
         })}
