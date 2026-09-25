@@ -60,6 +60,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
   const [open, setOpen] = useState(false);
   const [statsOpen, setStatsOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<OrderStatus>("new");
+  const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ kind: "single" | "bulk"; ids: string[]; label: string; confirmTitle?: string } | null>(null);
   const [deleteError, setDeleteError] = useState("");
@@ -255,9 +256,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     }
   }
 
-  const visibleOrders = orders.filter((order) => columns.some((column) => column.statuses.some((status) => status === order.status)));
+  const query = search.trim().toLocaleLowerCase("vi");
+  const matchesSearch = (order: Order) => !query || [order.code, order.customerName, order.tableCode ?? "", ...order.items.map((item) => item.itemName)].some((value) => value.toLocaleLowerCase("vi").includes(query));
+  const visibleOrders = orders.filter((order) => columns.some((column) => column.statuses.some((status) => status === order.status)) && matchesSearch(order));
   const allSelected = visibleOrders.length > 0 && visibleOrders.every((order) => selectedIds.includes(order.id));
-  const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status));
+  const mobileOrders = orders.filter((order) => columns.find((column) => column.id === mobileTab)?.statuses.some((status) => status === order.status) && matchesSearch(order));
   const mobileAllSelected = mobileOrders.length > 0 && mobileOrders.every((order) => selectedIds.includes(order.id));
   const selectedInTab = mobileOrders.filter((order) => selectedIds.includes(order.id)).map((order) => order.id);
   const selectedBusy = bulkUpdating || deleting || selectedInTab.some((id) => updatingIds.includes(id));
@@ -294,6 +297,11 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
     </header>
     {statsOpen && <StatsDialog onOpenChange={setStatsOpen} />}
     <section className="meli-admin-shell mx-auto min-w-0 max-w-[1700px] px-4 py-4 sm:px-6 sm:py-6">
+      <div className="meli-admin-desktop-tabs mb-4 hidden items-end gap-2 border-b border-[#e1e3e5] xl:flex" aria-label="Tổng quan trạng thái đơn">
+        {columns.map((column, index) => <div key={column.id} className={`flex min-h-11 items-center gap-2 rounded-t-lg border border-b-0 px-5 text-sm font-semibold ${index === 0 ? "border-[#e1e3e5] bg-white text-[#a82d1e]" : "border-transparent bg-[#f1f2f3] text-[#454545]"}`}>
+          {column.title}<span className="rounded-full bg-[#e9e9ea] px-2 py-0.5 text-xs tabular-nums">{orders.filter((order) => column.statuses.some((status) => status === order.status)).length}</span>
+        </div>)}
+      </div>
       <div role="tablist" aria-label="Trạng thái đơn hàng" className="sticky top-0 z-20 -mx-4 mb-4 grid grid-cols-3 gap-2 border-y border-[#e1e3e5] bg-[#f6f6f7] px-4 py-3 xl:hidden">
         {columns.map((column) => {
           const Icon = column.icon;
@@ -309,13 +317,18 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             const next = columns[nextIndex].id;
             selectMobileTab(next);
             document.getElementById(`order-tab-${next}`)?.focus();
-          }} className={`flex min-w-0 items-center justify-between gap-1 rounded-xl border px-2 py-2.5 text-xs font-bold sm:justify-start sm:gap-2 sm:px-3 sm:text-sm ${column.id === "new" && newOrderSignal > 0 ? "animate-new-order" : ""} ${mobileTab === column.id ? "border-[#a82d1e] bg-[#a82d1e] text-white" : "border-[#e9d7c5] bg-white text-[#2e201c]"}`}>
+          }} className={`flex min-w-0 items-center justify-between gap-1 rounded-lg border px-2 py-2.5 text-xs font-bold sm:justify-start sm:gap-2 sm:px-3 sm:text-sm ${column.id === "new" && newOrderSignal > 0 ? "animate-new-order" : ""} ${mobileTab === column.id ? "border-[#a82d1e] bg-white text-[#a82d1e]" : "border-[#e1e3e5] bg-[#f6f6f7] text-[#303030]"}`}>
             <Icon className="hidden size-4 shrink-0 sm:block" aria-hidden="true" /><span className="min-w-0 truncate">{column.title}</span><OrderCountBadge count={count} effect={countEffects[column.id]} active={mobileTab === column.id} />
           </button>;
         })}
       </div>
       {error && <p className="mb-5 rounded-2xl bg-red-50 p-4 text-red-700">{error}</p>}
-      <div className="mb-4 hidden flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white p-3 xl:flex">
+      <div className="meli-admin-filterbar mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-[#e1e3e5] bg-white p-3">
+        <label className="relative min-w-[180px] flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
+          <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm mã đơn, tên khách, bàn hoặc món..." aria-label="Tìm trong danh sách đơn" className="h-10 w-full border-[#e1e3e5] bg-white pl-9" />
+        </label>
+        <div className="hidden items-center gap-3 xl:flex">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold">
           <Checkbox checked={allSelected} disabled={!visibleOrders.length || deleting || bulkUpdating} onCheckedChange={(checked) => setSelectedIds(checked === true ? visibleOrders.map((order) => order.id) : [])} aria-label="Chọn tất cả đơn" />
           Chọn tất cả ({visibleOrders.length})
@@ -325,6 +338,7 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
           <Button variant="destructive" size="sm" disabled={!selectedIds.length || deleting || bulkUpdating} onClick={() => requestDelete("bulk", selectedIds, `${selectedIds.length} đơn đã chọn`)}>
             <Trash2 className="size-4" /> Xóa đã chọn
           </Button>
+        </div>
         </div>
       </div>
       <div className="mb-3 min-w-0 px-1 xl:hidden">
@@ -347,8 +361,8 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
         {columns.map((column) => {
           const Icon = column.icon;
           const ActionIcon = column.actionIcon;
-          const list = orders.filter((order) => column.statuses.some((status) => status === order.status));
-          return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`min-h-64 min-w-0 rounded-xl border border-[#e1e3e5] bg-[#f1f2f3] p-2 sm:p-3 ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
+          const list = orders.filter((order) => column.statuses.some((status) => status === order.status) && matchesSearch(order));
+          return <div key={column.id} id={`order-panel-${column.id}`} role="tabpanel" aria-labelledby={`order-tab-${column.id}`} className={`meli-admin-column meli-admin-column-${column.id} min-h-64 min-w-0 rounded-xl border border-[#e1e3e5] p-2 sm:p-3 ${mobileTab === column.id ? "" : "hidden xl:block"}`}>
             <div className="mb-3 flex items-center justify-between px-2">
               <h2 className="flex items-center gap-2 font-black"><Icon className="size-4" />{column.title}</h2>
               <OrderCountBadge count={list.length} effect={countEffects[column.id]} desktop />
@@ -360,42 +374,40 @@ export function AdminDashboard({ ownerName, menu }: { ownerName: string; menu: M
             <div className="space-y-3">
               {loading && !orders.length ? <div className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Đang tải...</div> : !list.length ? <p className="rounded-2xl bg-white p-5 text-sm text-zinc-500">Chưa có đơn ở trạng thái này.</p> : list.map((order) =>
                 <SwipeableOrderCard key={order.id} order={order} busy={updatingIds.includes(order.id) || deleting} loading={updatingIds.includes(order.id) || (deleting && deleteTarget?.ids.includes(order.id) === true)} onSwipe={handleSwipe}>
-                <article className="min-w-0 overflow-hidden rounded-lg border border-[#d9dcdf] bg-white shadow-sm">
+                <article className="meli-admin-order-card min-w-0 overflow-hidden rounded-lg border border-[#d9dcdf] bg-white shadow-sm">
                   <div className="p-3 sm:p-4">
-                    <div className="flex min-w-0 items-start justify-between gap-2">
-                      <div className="flex min-w-0 items-start gap-2.5">
-                        <Checkbox className="mt-0.5 size-5 border-[#b92717] data-[state=checked]:border-[#b92717] data-[state=checked]:bg-[#b92717]" checked={selectedIds.includes(order.id)} disabled={bulkUpdating || deleting} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
-                        <div className="min-w-0">
-                          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs">
-                            <span className="max-w-full break-all rounded bg-[#fff0ed] px-1.5 py-0.5 font-bold text-[#a82d1e]">{order.code}</span>
-                            <span className="text-zinc-600">{order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt"}</span>
-                            <time dateTime={order.createdAt} title="Giờ Việt Nam" className="whitespace-nowrap text-zinc-500">{formatOrderTime(order.createdAt)}</time>
-                          </div>
-                          <h3 className="mt-1.5 min-w-0 break-words text-lg font-black leading-tight">{order.orderType === "takeaway" ? "Mang về" : order.tableCode ? `Bàn ${order.tableCode}` : "Dùng tại chỗ"}</h3>
+                    <div className="flex min-w-0 items-start gap-2">
+                      <Checkbox className="mt-0.5 size-4 shrink-0 border-[#a82d1e] data-[state=checked]:border-[#a82d1e] data-[state=checked]:bg-[#a82d1e]" checked={selectedIds.includes(order.id)} disabled={bulkUpdating || deleting} onCheckedChange={(checked) => setSelectedIds((current) => checked === true ? [...current, order.id] : current.filter((id) => id !== order.id))} aria-label={`Chọn đơn ${order.code}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                          <h3 className="min-w-0 break-all text-sm font-bold leading-tight">{order.code}</h3>
+                          <time dateTime={order.createdAt} title="Giờ Việt Nam" className="shrink-0 text-[11px] tabular-nums text-[#616161]">{formatOrderTime(order.createdAt)}</time>
                         </div>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-1.5">
-                        {column.id === "new" && <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"><span className="size-1.5 rounded-full bg-red-500" aria-hidden="true" />Chưa làm xong</span>}
-                        {column.id === "cooking" && <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"><span className="size-1.5 rounded-full bg-amber-500" aria-hidden="true" />Chưa thanh toán</span>}
-                        {column.id === "paid" && <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-semibold text-green-700"><span className="size-1.5 rounded-full bg-green-500" aria-hidden="true" />Đã thanh toán</span>}
-                        {column.next && <Button size="sm" className="h-9 rounded-lg bg-[#b92717] px-3 font-bold hover:bg-[#9e281c]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.action}</>}</Button>}
+                        <p className="mt-1.5 min-w-0 break-words text-xs text-[#454545]">
+                          <span className="font-medium">{order.customerName?.trim() || (order.source === "staff_pos" ? "Chủ quán tạo" : "Khách tự đặt")}</span>
+                          <span className="mx-2 text-[#9a9a9a]">·</span>
+                          {order.orderType === "takeaway" ? "Mang về" : order.tableCode ? `Bàn ${order.tableCode}` : "Dùng tại chỗ"}
+                        </p>
                       </div>
                     </div>
-                    <div className="mt-3 border-y border-[#e1e3e5] py-1">{order.items.map((item) =>
-                      <div key={item.id} className="flex min-w-0 items-center justify-between gap-2 py-2.5 text-sm">
-                        <span className="min-w-0 break-words"><b className="mr-1.5 text-[#b92717]">{item.quantity}×</b>{item.itemName}{item.notes?.trim() && <span className="ml-1 text-[.78em] font-normal text-zinc-500">({item.notes.trim()})</span>}</span>
-                        <span className="shrink-0 font-medium">{formatMoney(item.price * item.quantity)}</span>
+                    <div className="mt-3 space-y-1.5">{order.items.map((item) =>
+                      <div key={item.id} className="flex min-w-0 items-start justify-between gap-2 text-sm">
+                        <span className="min-w-0 break-words"><b className="mr-1.5 font-medium tabular-nums">{item.quantity}×</b>{item.itemName}{item.notes?.trim() && <span className="ml-1 text-[.78em] font-normal text-zinc-500">({item.notes.trim()})</span>}</span>
+                        <span className="shrink-0 tabular-nums">{formatMoney(item.price * item.quantity)}</span>
                       </div>
                     )}</div>
-                    {order.note && <p className="mt-2 break-words rounded bg-[#f5f0ed] px-2.5 py-2 text-xs italic text-[#9e281c]"><b>Ghi chú:</b> {order.note}</p>}
-                  </div>
-                  <div className="flex min-w-0 items-center gap-1.5 border-t border-[#e1e3e5] bg-[#fbfbfb] px-3 py-2.5 sm:px-4">
-                    <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-600" title={order.customerName?.trim() || "Chưa cung cấp"}>Khách: <span className="font-medium text-[#2e201c]">{order.customerName?.trim() || "Chưa cung cấp"}</span></p>
-                    <div className="flex shrink-0 items-center gap-0.5">
-                      {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} className="text-[#a82d1e] hover:bg-[#fff0df]" onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
-                      <Button variant="ghost" size="icon-sm" className="text-red-700 hover:bg-red-50 hover:text-red-800" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
+                    {order.note && <p className="mt-2 break-words rounded-md bg-[#f6f6f7] px-2.5 py-2 text-xs text-[#454545]"><b>Ghi chú:</b> {order.note}</p>}
+                    <div className="mt-3 flex items-center justify-between border-t border-[#e1e3e5] pt-2.5 text-sm"><span>Tổng cộng</span><strong className="tabular-nums">{formatMoney(order.total)}</strong></div>
+                    <div className="mt-3 flex min-w-0 items-center justify-between gap-2">
+                      <span className={`inline-flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-[11px] font-medium ${column.id === "new" ? "bg-[#fff0ee] text-[#a82d1e]" : column.id === "cooking" ? "bg-[#fff5df] text-[#956112]" : "bg-[#e7f7ed] text-[#16734a]"}`}>
+                        <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />{column.title}
+                      </span>
+                      <div className="flex min-w-0 shrink-0 items-center gap-1">
+                        {["new", "cooking", "served"].includes(order.status) && order.paymentStatus !== "paid" && <Button variant="ghost" size="icon-sm" disabled={updatingIds.includes(order.id)} onClick={() => setEditTarget(order)} aria-label={`Sửa đơn ${order.code}`} title="Sửa đơn"><Pencil className="size-4" /></Button>}
+                        <Button variant="ghost" size="icon-sm" onClick={() => requestDelete("single", [order.id], `đơn ${order.code}`)} aria-label={`Xóa đơn ${order.code}`} title="Xóa đơn"><Trash2 className="size-4" /></Button>
+                        {column.next && <Button size="sm" className="ml-1 h-9 rounded-md bg-[#a82d1e] px-2.5 text-xs font-semibold hover:bg-[#89291d]" disabled={updatingIds.includes(order.id)} aria-busy={updatingIds.includes(order.id)} onClick={() => updateStatus(order.id, column.next)}>{updatingIds.includes(order.id) ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" /><span className="sr-only">Đang cập nhật...</span></> : <><ActionIcon className="size-4" />{column.id === "new" ? "Bắt đầu làm" : column.action}</>}</Button>}
+                      </div>
                     </div>
-                    <b className="shrink-0 text-base text-[#b92717] sm:text-lg">{formatMoney(order.total)}</b>
                   </div>
                 </article>
                 </SwipeableOrderCard>

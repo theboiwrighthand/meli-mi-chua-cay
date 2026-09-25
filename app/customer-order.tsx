@@ -216,8 +216,8 @@ export function CustomerOrder({ initialTableCode = "", menu, isAdmin = false }: 
           </div>
         </div>
         <div className="meli-hero-banner">
-          <div className="meli-hero-photo" aria-hidden="true"><Image src="/noodle-hero.webp" alt="" fill priority sizes="(max-width: 640px) 60vw, 440px" className="object-cover" /></div>
-          <div className="meli-hero-inner"><div className="meli-hero-copy"><span>Thực đơn MELI</span><h1>Mì chua cay, đúng vị bạn thích.</h1><p>Chọn món ngon, quán làm ngay.</p></div></div>
+          <div className="meli-hero-photo" aria-hidden="true"><Image src={itemPhotos["mi-tim-cat"]} alt="" fill priority unoptimized sizes="(max-width: 640px) 60vw, 520px" className="object-cover" /></div>
+          <div className="meli-hero-inner"><div className="meli-hero-copy"><span>ĐẬM VỊ HÀ NỘI</span><h1>Mì chua cay MELI</h1><p>Chua cay vừa miệng, topping đầy đặn, ngon mỗi ngày.</p></div></div>
         </div>
       </header>
 
