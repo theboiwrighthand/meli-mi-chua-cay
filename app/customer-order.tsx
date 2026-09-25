@@ -50,7 +50,7 @@ function MenuItemPicture({ item }: { item: MenuItem }) {
       ) : (
         <div className="meli-food-placeholder" style={{ display: "flex", width: "100%", height: "100%", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }} role="img" aria-label={`Hình đại diện nhóm ${item.category === "mains" ? "mì chua cay" : item.category === "extras" ? "ăn kèm" : "đồ uống"}`}>
           {item.category === "mains" ? <Soup aria-hidden="true" /> : item.category === "extras" ? <CookingPot aria-hidden="true" /> : <Coffee aria-hidden="true" />}
-          <span>{item.category === "mains" ? "Mì chua cay" : item.category === "extras" ? "Ăn kèm" : "Đồ uống"}</span>
+          {/* <span>{item.category === "mains" ? "Mì chua cay" : item.category === "extras" ? "Ăn kèm" : "Đồ uống"}</span> */}
         </div>
       )}
     </div>
